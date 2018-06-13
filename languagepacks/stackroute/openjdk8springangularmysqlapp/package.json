@@ -1,0 +1,26 @@
+{
+  "name": "languagepack-openjdk8springangularmysqlapp",
+  "version": "0.1.0",
+  "description": "Open JDK 8 Languagepack for DI",
+  "scripts": {
+    "boot": "./run.sh",
+    "start": "node index",
+    "test": "mocha **/*.spec.js"
+  },
+  "main": "index.js",
+  "author": "Basavaraj <rajiff@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "amqplib": "^0.5.1",
+    "async": "^2.1.4",
+    "glob": "^7.1.2",
+    "lodash": "^4.17.4",
+    "mysql": "^2.13.0",
+    "redis": "^2.6.5",
+    "xml2js": "^0.4.17"
+  },
+  "devDependencies": {
+    "mocha": "^3.2.0",
+    "should": "^11.2.0"
+  }
+}

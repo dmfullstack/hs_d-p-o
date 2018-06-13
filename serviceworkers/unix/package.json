@@ -1,0 +1,21 @@
+{
+  "name": "serviceWorkers-unix",
+  "version": "0.1.0",
+  "description": "serviceWorkers-unix for DP",
+  "scripts": {
+    "start": "node index",
+    "test": "mocha **/*.spec.js"
+  },
+  "main": "index.js",
+  "author": "Sagar Patke <sagarpatke@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "amqplib": "^0.5.1",
+    "async": "^2.1.4",
+    "lodash": "^4.17.4"
+  },
+  "devDependencies": {
+    "mocha": "^3.2.0",
+    "should": "^11.2.0"
+  }
+}

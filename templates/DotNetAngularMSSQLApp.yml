@@ -1,0 +1,734 @@
+version: '1'
+stages:
+  git-clone-angularbaserepo:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "ssh://git@gitlab-wd.stackroute.in:2222/hobbes-boilerplates/baserepo-angularioApp.git"
+      REPOSITORY_REF: master
+      REPOSITORY_REF_TYPE: "branch"
+      WORKSPACE: "{{context.WORKSPACE}}/angular-baserepo"
+    depends_on:
+      - validate-submission-folder-structure      
+  git-clone-submission:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "{{payload.submissionRepoUrl}}"
+      REPOSITORY_REF: "{{payload.submissionRepoRef}}"
+      REPOSITORY_REF_TYPE: "{{payload.submissionRepoReftype}}"
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+  validate-submission-folder-structure:
+    type: stackroute/unix/findandassertStructure
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      ASSERT_FOLDERS_EXISTS: e2e src src/app
+      ASSERT_FILES_EXISTS: package.json tsconfig.json tslint.json Program.cs *.csproj appsettings.json
+      ASSERT_FOLDERS_DOES_NOT_EXISTS: node_modules
+      TARGET_ROOT_DIRECTORY: .
+      EXCLUDE_FOLDERS_TO_ASSERT: "! -name commander ! -name test ! -name .git ! -name solution ! -name angular-baserepo ! -name .scannerwork ! -name . "
+      MAX_DEPTH: "1"
+      FILE_TYPE: d
+    output:
+      payload:
+        output:
+          stage::build:
+            assert-folder-structure:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - git-clone-submission        
+  git-clone-solution:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "{{payload.solutionRepoUrl}}"
+      REPOSITORY_REF: "{{payload.solutionRepoRef}}"
+      REPOSITORY_REF_TYPE: "{{payload.solutionRepoReftype}}"
+      WORKSPACE: "{{context.WORKSPACE}}/solution"
+    depends_on:
+      - validate-submission-folder-structure  
+  copy-angularbaserepo-tslint-to-submission:
+    type: stackroute/unix/findandsafecopy
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}"
+      SOURCE_ROOT_DIRECTORY: "angular-baserepo/tslint.json"
+      TARGET_ROOT_DIRECTORY: "./submission"
+      # Ignoring the directories which are not used for copying
+      EXCLUDE_FOLDERS_TO_COPY: "! -name commander ! -name test ! -name .git ! -name solution ! -name angular-baserepo ! -name submission ! -name .scannerwork ! -name . "
+      MAX_DEPTH: "1"
+      FILE_TYPE: d
+    depends_on:
+      - git-clone-solution
+      - validate-submission-folder-structure
+  safecopy-tslint-solution-to-submission:
+    type: stackroute/unix/searchandcopytodestination
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}"
+      SOURCE_ROOT_DIRECTORY: "./solution/"
+      SOURCE_ROOT_FILE: 'tslint.json'
+      TARGET_ROOT_DIRECTORY: "./submission"
+      # Ignoring the directories which are not used for copying
+      EXCLUDE_FOLDERS_TO_COPY: "! -name commander ! -name test ! -name .git ! -name solution ! -name angular-baserepo ! -name submission ! -name .scannerwork ! -name ."
+      MAX_DEPTH: "1"
+      SOURCE_FILE_TYPE: f
+      DESTINATION_FILE_TYPE: d
+    depends_on:
+      - copy-angularbaserepo-tslint-to-submission
+      - validate-submission-folder-structure
+  copy-commander-e2e-config-to-submission:
+    # Copy commander's protractor config file to submission
+    type: stackroute/unix/searchandcopytodestination
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}"
+      SOURCE_ROOT_DIRECTORY: "./solution/"
+      SOURCE_ROOT_FILE: 'protractor.commander.conf.js'
+      TARGET_ROOT_DIRECTORY: "./submission"
+      # Ignoring the directories which are not used for copying
+      EXCLUDE_FOLDERS_TO_COPY: "! -name commander ! -name test ! -name .git ! -name solution ! -name angular-baserepo ! -name submission ! -name .scannerwork ! -name ."
+      MAX_DEPTH: "1"
+      SOURCE_FILE_TYPE: f
+      DESTINATION_FILE_TYPE: d
+    depends_on:
+      - git-clone-solution
+      - validate-submission-folder-structure
+  copy-commander-e2e-tests-to-submission:
+    # Copy commander's protractor config file to submission
+    type: stackroute/unix/searchandcopytodestination
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}"
+      SOURCE_ROOT_DIRECTORY: "./solution/"
+      SOURCE_ROOT_FILE: 'e2eCommander'
+      TARGET_ROOT_DIRECTORY: "./submission"
+      # Ignoring the directories which are not used for copying
+      EXCLUDE_FOLDERS_TO_COPY: "! -name commander ! -name test ! -name .git ! -name solution ! -name angular-baserepo ! -name submission ! -name .scannerwork ! -name ."
+      MAX_DEPTH: "1"
+      SOURCE_FILE_TYPE: d
+      DESTINATION_FILE_TYPE: d
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+      - validate-submission-folder-structure
+  copy-commandertests-to-submission:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "solution/commander"
+      DESTINATION: "submission/commander"
+    depends_on:
+      - git-clone-solution
+      - validate-submission-folder-structure
+  copy-angularbaserepo-protractor-config-submission:
+    type: stackroute/unix/searchandcopy
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}"
+      SOURCE_ROOT_DIRECTORY: "angular-baserepo/protractor-extend.conf.js"
+      TARGET_ROOT_DIRECTORY: "./submission"
+      # Ignoring the directories which are not used for copying
+      EXCLUDE_FOLDERS_TO_COPY: "! -name commander ! -name test ! -name .git ! -name solution ! -name angular-baserepo ! -name submission ! -name .scannerwork ! -name ."
+      MAX_DEPTH: "1"
+      FILE_TYPE: d
+    depends_on:
+      - validate-submission-folder-structure
+      - git-clone-angularbaserepo
+  copy-angularbaserepo-karma-config-submission:
+    type: stackroute/unix/searchandcopy
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}"
+      SOURCE_ROOT_DIRECTORY: "angular-baserepo/karma-extend.conf.js"
+      TARGET_ROOT_DIRECTORY: "./submission"
+      # Ignoring the directories which are not used for copying
+      EXCLUDE_FOLDERS_TO_COPY: "! -name commander ! -name test ! -name .git ! -name solution ! -name angular-baserepo ! -name submission ! -name .scannerwork ! -name . "
+      MAX_DEPTH: "1"
+      FILE_TYPE: d
+    depends_on:
+      - validate-submission-folder-structure
+      - git-clone-angularbaserepo
+  build-dotnet-project:
+    type: stackroute/dotnetapp/findandbuild
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      MAX_DEPTH: "1"
+      # Ignoring the directories which are not required for building the dotnet project
+      EXCLUDE_FOLDERS_TO_BUILD: "! -name commander ! -name test ! -name .git ! -name ."
+      CMD: "dotnet build"
+      FILE_TYPE: d
+    output:
+      payload:
+        output:
+          stage::build:
+            dotnetBuild:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - validate-submission-folder-structure
+  install-packages:
+    type: stackroute/angulario/findandinstalldep
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      # TIMEOUT_DURATION_MS: "600000"
+      NPM_OPTIONS: -s
+      MAX_DEPTH: "1"
+      # Ignoring the directories which are not required for installing the dependencies
+      EXCLUDE_FOLDERS_TO_BUILD: "! -name commander ! -name test ! -name .git ! -name .scannerwork ! -name ."
+      ADDITIONAL_PACKAGES_TO_INSTALL: karma-junit-reporter jasmine-reporters
+      FILE_TYPE: d
+    output:
+      payload:
+        output:
+          stage::build:
+            install-packages:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - validate-submission-folder-structure
+  build-angular-project:
+    type: stackroute/angulario/findandbuild
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TIMEOUT_DURATION_MS: "300000"
+      NPM_SCRIPT_OPTIONS: --progress false
+      MAX_DEPTH: "1"
+      # Ignoring the directories which are not required for building the angular part of the project
+      EXCLUDE_FOLDERS_TO_BUILD: "! -name commander ! -name test ! -name .git ! -name .scannerwork ! -name node_modules ! -name ."
+      FILE_TYPE: d
+    output:
+      payload:
+        output:
+          stage::build:
+            UIAppbuild:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - install-packages
+  run-cadet-tests:
+    type: stackroute/dotnetmssqlapp/test
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TEST_FOLDER: "{{context.WORKSPACE}}/submission/test"
+      REPORT_OUTPUT_FILE: "{{context.WORKSPACE}}/submission/test/TestResults/testResults.xml"
+      # Format of the output file which will be produced after running the tests
+      OUTPUT_FILE: 'trx;LogFileName=testResults.xml'
+    output:
+      payload:
+        output:
+          tests:
+            cadetTests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-dotnet-project
+  run-commander-tests:
+    type: stackroute/dotnetmssqlapp/test
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TEST_FOLDER: "{{context.WORKSPACE}}/submission/commander"
+      REPORT_OUTPUT_FILE: "{{context.WORKSPACE}}/submission/commander/TestResults/commanderResults.xml"
+      # Format of the output file which will be produced after running the tests
+      OUTPUT_FILE: "trx;LogFileName=commanderResults.xml"
+    output:
+      payload:
+        output:
+          tests:
+            commanderTests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-dotnet-project
+      - copy-commandertests-to-submission
+  run-cadet-karma-tests:
+    type: stackroute/angulario/findandrunKarma
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TIMEOUT_DURATION_MS: "600000"
+      TEST_OUTPUT_FILE_PATTERN: "**/reports/karma/cadettests/karma-test-result.xml"
+      REPORT_OUTPUT_DIR: "reports/karma/cadettests"
+      OVERRIDE_KARMA_CONFIG_FILE: "karma.conf.js" #This is the config which should be overriden by command
+      EXTENDED_KARMA_CONFIG_FILE: "karma-extend.conf.js" #This is the config which is actually will be used
+      KARMA_REPORT_PATH: "reports/karma/cadettests/"
+      KARMA_REPORT_FILE: "karma-test-result.xml"
+      NPM_OPTIONS: -s
+      NPM_SCRIPT_OPTIONS: --progress false --no-sandbox --browsers ChromeHeadless
+      # Ignoring the directories which are not required to run the karma test cases
+      EXCLUDE_FOLDERS_TO_RUN: "! -name commander ! -name test ! -name .git ! -name .scannerwork ! -name ."
+      MAX_DEPTH: "1"
+    output:
+      payload:
+        output:
+          tests:
+            # Mapped to Cadet UI Unit Tests
+            cadetUIUnitTests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-angular-project
+      - copy-angularbaserepo-karma-config-submission
+  run-cadet-nge2edotnet-tests:
+    type: stackroute/dotnetangularmssqlapp/nge2edotnet
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TEST_OUTPUT_FILE_PATTERN: "**/reports/protractor/cadettests/protractor-e2etest-result.xml"
+      REPORT_OUTPUT_DIR: "reports/protractor/cadettests"
+      OVERRIDE_PROTRACTOR_CONFIG_FILE: "protractor.conf.js" #This is the config which should be overriden by command
+      EXTENDED_PROTRACTOR_CONFIG_FILE: "protractor-extend.conf.js" #This is the config which is actually will be used
+      PROTRACTOR_REPORT_PATH: "reports/protractor/cadettests/"
+      PROTRACTOR_REPORT_FILE: "protractor-e2etest-result.xml"
+      # PROTRACTOR_FILE_SPECS: "./e2e/**/*e2e-spec.ts"
+      PROTRACTOR_FILE_SPECS: "./e2e/*.ts"
+      IGNORE_FILE_PATTERN: "reports/protractor/commandertests/protractor-commander-e2etest-result.xml"
+      NPM_OPTIONS: -s
+      NPM_SCRIPT_OPTIONS: --progress false
+      # Ignoring the directories which are not required to run the e2e cadet test cases
+      EXCLUDE_FOLDERS_TO_RUN: "! -name commander ! -name test ! -name .git ! -name .scannerwork ! -name ."
+      MAX_DEPTH: "1"
+    output:
+      payload:
+        output:
+          tests:
+            # Mapped to Cadet End-To-End tests
+            cadete2etests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-angular-project
+      - copy-angularbaserepo-protractor-config-submission
+  run-commander-nge2edotnet-tests:
+    type: stackroute/dotnetangularmssqlapp/nge2edotnet
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TIMEOUT_DURATION_MS: "600000"
+      TEST_OUTPUT_FILE_PATTERN: "**/reports/protractor/commandertests/protractor-commander-e2etest-result.xml"
+      REPORT_OUTPUT_DIR: "reports/protractor/commandertests"
+      OVERRIDE_PROTRACTOR_CONFIG_FILE: "protractor.commander.conf.js" #This is the config which should be overriden by command
+      EXTENDED_PROTRACTOR_CONFIG_FILE: "protractor-extend.conf.js" #This is the config which is actually will be used
+      PROTRACTOR_REPORT_PATH: "reports/protractor/commandertests/"
+      PROTRACTOR_REPORT_FILE: "protractor-commander-e2etest-result.xml"
+      PROTRACTOR_TEST_DIRECTORY: "e2eCommander"
+      # PROTRACTOR_FILE_SPECS: "./e2eCommander/**/*e2e-spec.ts"
+      # PROTRACTOR_FILE_SPECS: "./e2eCommander/**/*.ts"
+      PROTRACTOR_FILE_SPECS: "./e2eCommander/*.ts"
+      IGNORE_FILE_PATTERN: "reports/protractor/cadettests/protractor-e2etest-result.xml"
+      NPM_OPTIONS: -s
+      NPM_SCRIPT_OPTIONS: --progress false
+      # Ignoring the directories which are not required to run the e2e commander test cases
+      EXCLUDE_FOLDERS_TO_RUN: "! -name commander ! -name test ! -name .git ! -name .scannerwork ! -name ."
+      MAX_DEPTH: "1"
+    output:
+      payload:
+        output:
+          tests:
+            # Mapped to Cadet End-To-End tests
+            commandere2etests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-angular-project
+      - build-dotnet-project
+      - copy-commander-e2e-tests-to-submission
+      - copy-commander-e2e-config-to-submission
+  run-tslint:
+    type: stackroute/angulario/findandruntslint
+    input:
+      RULES_FILE: "tslint.json"
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      NPM_OPTIONS: -s
+      NPM_SCRIPT_CMD: ng
+      NPM_SCRIPT_OPTIONS: lint --format json
+      # IGNORE_PATTERN: --ignore-pattern html/**/*.js --ignore-pattern data/**/*.js --ignore-pattern commander-UI-Test/**/*.js --ignore-pattern commander/**/*.js
+      MAX_DEPTH: "1"
+      # Ignoring the directories which are not required to run tslint
+      EXCLUDE_FOLDERS_TO_RUN: "! -name commander ! -name test ! -name .git ! -name .scannerwork ! -name ."
+    output:
+      payload:
+        output:
+          lint:
+            # Mapped to code quality tests - TS Lint (uses TS Lint for TS files)
+            tslint:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - safecopy-tslint-solution-to-submission
+      - build-angular-project
+version: '1'
+stages:
+  git-clone-angularbaserepo:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "ssh://git@gitlab-wd.stackroute.in:2222/hobbes-boilerplates/baserepo-angularioApp.git"
+      REPOSITORY_REF: master
+      REPOSITORY_REF_TYPE: "branch"
+      WORKSPACE: "{{context.WORKSPACE}}/angular-baserepo"
+    depends_on:
+      - validate-submission-folder-structure      
+  git-clone-submission:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "{{payload.submissionRepoUrl}}"
+      REPOSITORY_REF: "{{payload.submissionRepoRef}}"
+      REPOSITORY_REF_TYPE: "{{payload.submissionRepoReftype}}"
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+  validate-submission-folder-structure:
+    type: stackroute/unix/findandassertStructure
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      ASSERT_FOLDERS_EXISTS: e2e src src/app
+      ASSERT_FILES_EXISTS: package.json tsconfig.json tslint.json Program.cs *.csproj appsettings.json
+      ASSERT_FOLDERS_DOES_NOT_EXISTS: node_modules
+      TARGET_ROOT_DIRECTORY: .
+      EXCLUDE_FOLDERS_TO_ASSERT: "! -name commander ! -name test ! -name .git ! -name solution ! -name angular-baserepo ! -name .scannerwork ! -name . "
+      MAX_DEPTH: "1"
+      FILE_TYPE: d
+    output:
+      payload:
+        output:
+          stage::build:
+            assert-folder-structure:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - git-clone-submission        
+  git-clone-solution:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "{{payload.solutionRepoUrl}}"
+      REPOSITORY_REF: "{{payload.solutionRepoRef}}"
+      REPOSITORY_REF_TYPE: "{{payload.solutionRepoReftype}}"
+      WORKSPACE: "{{context.WORKSPACE}}/solution"
+    depends_on:
+      - validate-submission-folder-structure  
+  copy-angularbaserepo-tslint-to-submission:
+    type: stackroute/unix/findandsafecopy
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}"
+      SOURCE_ROOT_DIRECTORY: "angular-baserepo/tslint.json"
+      TARGET_ROOT_DIRECTORY: "./submission"
+      # Ignoring the directories which are not used for copying
+      EXCLUDE_FOLDERS_TO_COPY: "! -name commander ! -name test ! -name .git ! -name solution ! -name angular-baserepo ! -name submission ! -name .scannerwork ! -name . "
+      MAX_DEPTH: "1"
+      FILE_TYPE: d
+    depends_on:
+      - git-clone-solution
+      - validate-submission-folder-structure
+  safecopy-tslint-solution-to-submission:
+    type: stackroute/unix/searchandcopytodestination
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}"
+      SOURCE_ROOT_DIRECTORY: "./solution/"
+      SOURCE_ROOT_FILE: 'tslint.json'
+      TARGET_ROOT_DIRECTORY: "./submission"
+      # Ignoring the directories which are not used for copying
+      EXCLUDE_FOLDERS_TO_COPY: "! -name commander ! -name test ! -name .git ! -name solution ! -name angular-baserepo ! -name submission ! -name .scannerwork ! -name ."
+      MAX_DEPTH: "1"
+      SOURCE_FILE_TYPE: f
+      DESTINATION_FILE_TYPE: d
+    depends_on:
+      - copy-angularbaserepo-tslint-to-submission
+      - validate-submission-folder-structure
+  copy-commander-e2e-config-to-submission:
+    # Copy commander's protractor config file to submission
+    type: stackroute/unix/searchandcopytodestination
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}"
+      SOURCE_ROOT_DIRECTORY: "./solution/"
+      SOURCE_ROOT_FILE: 'protractor.commander.conf.js'
+      TARGET_ROOT_DIRECTORY: "./submission"
+      # Ignoring the directories which are not used for copying
+      EXCLUDE_FOLDERS_TO_COPY: "! -name commander ! -name test ! -name .git ! -name solution ! -name angular-baserepo ! -name submission ! -name .scannerwork ! -name ."
+      MAX_DEPTH: "1"
+      SOURCE_FILE_TYPE: f
+      DESTINATION_FILE_TYPE: d
+    depends_on:
+      - git-clone-solution
+      - validate-submission-folder-structure
+  copy-commander-e2e-tests-to-submission:
+    # Copy commander's protractor config file to submission
+    type: stackroute/unix/searchandcopytodestination
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}"
+      SOURCE_ROOT_DIRECTORY: "./solution/"
+      SOURCE_ROOT_FILE: 'e2eCommander'
+      TARGET_ROOT_DIRECTORY: "./submission"
+      # Ignoring the directories which are not used for copying
+      EXCLUDE_FOLDERS_TO_COPY: "! -name commander ! -name test ! -name .git ! -name solution ! -name angular-baserepo ! -name submission ! -name .scannerwork ! -name ."
+      MAX_DEPTH: "1"
+      SOURCE_FILE_TYPE: d
+      DESTINATION_FILE_TYPE: d
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+      - validate-submission-folder-structure
+  copy-commandertests-to-submission:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "solution/commander"
+      DESTINATION: "submission/commander"
+    depends_on:
+      - git-clone-solution
+      - validate-submission-folder-structure
+  copy-angularbaserepo-protractor-config-submission:
+    type: stackroute/unix/searchandcopy
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}"
+      SOURCE_ROOT_DIRECTORY: "angular-baserepo/protractor-extend.conf.js"
+      TARGET_ROOT_DIRECTORY: "./submission"
+      # Ignoring the directories which are not used for copying
+      EXCLUDE_FOLDERS_TO_COPY: "! -name commander ! -name test ! -name .git ! -name solution ! -name angular-baserepo ! -name submission ! -name .scannerwork ! -name ."
+      MAX_DEPTH: "1"
+      FILE_TYPE: d
+    depends_on:
+      - validate-submission-folder-structure
+      - git-clone-angularbaserepo
+  copy-angularbaserepo-karma-config-submission:
+    type: stackroute/unix/searchandcopy
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}"
+      SOURCE_ROOT_DIRECTORY: "angular-baserepo/karma-extend.conf.js"
+      TARGET_ROOT_DIRECTORY: "./submission"
+      # Ignoring the directories which are not used for copying
+      EXCLUDE_FOLDERS_TO_COPY: "! -name commander ! -name test ! -name .git ! -name solution ! -name angular-baserepo ! -name submission ! -name .scannerwork ! -name . "
+      MAX_DEPTH: "1"
+      FILE_TYPE: d
+    depends_on:
+      - validate-submission-folder-structure
+      - git-clone-angularbaserepo
+  build-dotnet-project:
+    type: stackroute/dotnetapp/findandbuild
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      MAX_DEPTH: "1"
+      # Ignoring the directories which are not required for building the dotnet project
+      EXCLUDE_FOLDERS_TO_BUILD: "! -name commander ! -name test ! -name .git ! -name ."
+      CMD: "dotnet build"
+      FILE_TYPE: d
+    output:
+      payload:
+        output:
+          stage::build:
+            dotnetBuild:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - validate-submission-folder-structure
+  install-packages:
+    type: stackroute/angulario/findandinstalldep
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      # TIMEOUT_DURATION_MS: "600000"
+      NPM_OPTIONS: -s
+      MAX_DEPTH: "1"
+      # Ignoring the directories which are not required for installing the dependencies
+      EXCLUDE_FOLDERS_TO_BUILD: "! -name commander ! -name test ! -name .git ! -name .scannerwork ! -name ."
+      ADDITIONAL_PACKAGES_TO_INSTALL: karma-junit-reporter jasmine-reporters
+      FILE_TYPE: d
+    output:
+      payload:
+        output:
+          stage::build:
+            install-packages:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - validate-submission-folder-structure
+  build-angular-project:
+    type: stackroute/angulario/findandbuild
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TIMEOUT_DURATION_MS: "300000"
+      NPM_SCRIPT_OPTIONS: --progress false
+      MAX_DEPTH: "1"
+      # Ignoring the directories which are not required for building the angular part of the project
+      EXCLUDE_FOLDERS_TO_BUILD: "! -name commander ! -name test ! -name .git ! -name .scannerwork ! -name node_modules ! -name ."
+      FILE_TYPE: d
+    output:
+      payload:
+        output:
+          stage::build:
+            UIAppbuild:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - install-packages
+  run-cadet-tests:
+    type: stackroute/dotnetmssqlapp/test
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TEST_FOLDER: "{{context.WORKSPACE}}/submission/test"
+      REPORT_OUTPUT_FILE: "{{context.WORKSPACE}}/submission/test/TestResults/testResults.xml"
+      # Format of the output file which will be produced after running the tests
+      OUTPUT_FILE: 'trx;LogFileName=testResults.xml'
+    output:
+      payload:
+        output:
+          tests:
+            cadetTests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-dotnet-project
+  run-commander-tests:
+    type: stackroute/dotnetmssqlapp/test
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TEST_FOLDER: "{{context.WORKSPACE}}/submission/commander"
+      REPORT_OUTPUT_FILE: "{{context.WORKSPACE}}/submission/commander/TestResults/commanderResults.xml"
+      # Format of the output file which will be produced after running the tests
+      OUTPUT_FILE: "trx;LogFileName=commanderResults.xml"
+    output:
+      payload:
+        output:
+          tests:
+            commanderTests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-dotnet-project
+      - copy-commandertests-to-submission
+  run-cadet-karma-tests:
+    type: stackroute/angulario/findandrunKarma
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TIMEOUT_DURATION_MS: "600000"
+      TEST_OUTPUT_FILE_PATTERN: "**/reports/karma/cadettests/karma-test-result.xml"
+      REPORT_OUTPUT_DIR: "reports/karma/cadettests"
+      OVERRIDE_KARMA_CONFIG_FILE: "karma.conf.js" #This is the config which should be overriden by command
+      EXTENDED_KARMA_CONFIG_FILE: "karma-extend.conf.js" #This is the config which is actually will be used
+      KARMA_REPORT_PATH: "reports/karma/cadettests/"
+      KARMA_REPORT_FILE: "karma-test-result.xml"
+      NPM_OPTIONS: -s
+      NPM_SCRIPT_OPTIONS: --progress false --no-sandbox --browsers ChromeHeadless
+      # Ignoring the directories which are not required to run the karma test cases
+      EXCLUDE_FOLDERS_TO_RUN: "! -name commander ! -name test ! -name .git ! -name .scannerwork ! -name ."
+      MAX_DEPTH: "1"
+    output:
+      payload:
+        output:
+          tests:
+            # Mapped to Cadet UI Unit Tests
+            cadetUIUnitTests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-angular-project
+      - copy-angularbaserepo-karma-config-submission
+  run-cadet-nge2edotnet-tests:
+    type: stackroute/dotnetangularmssqlapp/nge2edotnet
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TEST_OUTPUT_FILE_PATTERN: "**/reports/protractor/cadettests/protractor-e2etest-result.xml"
+      REPORT_OUTPUT_DIR: "reports/protractor/cadettests"
+      OVERRIDE_PROTRACTOR_CONFIG_FILE: "protractor.conf.js" #This is the config which should be overriden by command
+      EXTENDED_PROTRACTOR_CONFIG_FILE: "protractor-extend.conf.js" #This is the config which is actually will be used
+      PROTRACTOR_REPORT_PATH: "reports/protractor/cadettests/"
+      PROTRACTOR_REPORT_FILE: "protractor-e2etest-result.xml"
+      # PROTRACTOR_FILE_SPECS: "./e2e/**/*e2e-spec.ts"
+      PROTRACTOR_FILE_SPECS: "./e2e/*.ts"
+      IGNORE_FILE_PATTERN: "reports/protractor/commandertests/protractor-commander-e2etest-result.xml"
+      NPM_OPTIONS: -s
+      NPM_SCRIPT_OPTIONS: --progress false
+      # Ignoring the directories which are not required to run the e2e cadet test cases
+      EXCLUDE_FOLDERS_TO_RUN: "! -name commander ! -name test ! -name .git ! -name .scannerwork ! -name ."
+      MAX_DEPTH: "1"
+    output:
+      payload:
+        output:
+          tests:
+            # Mapped to Cadet End-To-End tests
+            cadete2etests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-angular-project
+      - copy-angularbaserepo-protractor-config-submission
+  run-commander-nge2edotnet-tests:
+    type: stackroute/dotnetangularmssqlapp/nge2edotnet
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TIMEOUT_DURATION_MS: "600000"
+      TEST_OUTPUT_FILE_PATTERN: "**/reports/protractor/commandertests/protractor-commander-e2etest-result.xml"
+      REPORT_OUTPUT_DIR: "reports/protractor/commandertests"
+      OVERRIDE_PROTRACTOR_CONFIG_FILE: "protractor.commander.conf.js" #This is the config which should be overriden by command
+      EXTENDED_PROTRACTOR_CONFIG_FILE: "protractor-extend.conf.js" #This is the config which is actually will be used
+      PROTRACTOR_REPORT_PATH: "reports/protractor/commandertests/"
+      PROTRACTOR_REPORT_FILE: "protractor-commander-e2etest-result.xml"
+      PROTRACTOR_TEST_DIRECTORY: "e2eCommander"
+      # PROTRACTOR_FILE_SPECS: "./e2eCommander/**/*e2e-spec.ts"
+      # PROTRACTOR_FILE_SPECS: "./e2eCommander/**/*.ts"
+      PROTRACTOR_FILE_SPECS: "./e2eCommander/*.ts"
+      IGNORE_FILE_PATTERN: "reports/protractor/cadettests/protractor-e2etest-result.xml"
+      NPM_OPTIONS: -s
+      NPM_SCRIPT_OPTIONS: --progress false
+      # Ignoring the directories which are not required to run the e2e commander test cases
+      EXCLUDE_FOLDERS_TO_RUN: "! -name commander ! -name test ! -name .git ! -name .scannerwork ! -name ."
+      MAX_DEPTH: "1"
+    output:
+      payload:
+        output:
+          tests:
+            # Mapped to Cadet End-To-End tests
+            commandere2etests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-angular-project
+      - build-dotnet-project
+      - copy-commander-e2e-tests-to-submission
+      - copy-commander-e2e-config-to-submission
+  run-tslint:
+    type: stackroute/angulario/findandruntslint
+    input:
+      RULES_FILE: "tslint.json"
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      NPM_OPTIONS: -s
+      NPM_SCRIPT_CMD: ng
+      NPM_SCRIPT_OPTIONS: lint --format json
+      # IGNORE_PATTERN: --ignore-pattern html/**/*.js --ignore-pattern data/**/*.js --ignore-pattern commander-UI-Test/**/*.js --ignore-pattern commander/**/*.js
+      MAX_DEPTH: "1"
+      # Ignoring the directories which are not required to run tslint
+      EXCLUDE_FOLDERS_TO_RUN: "! -name commander ! -name test ! -name .git ! -name .scannerwork ! -name ."
+    output:
+      payload:
+        output:
+          lint:
+            # Mapped to code quality tests - TS Lint (uses TS Lint for TS files)
+            tslint:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - safecopy-tslint-solution-to-submission
+      - build-angular-project

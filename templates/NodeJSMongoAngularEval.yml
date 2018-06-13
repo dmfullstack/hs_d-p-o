@@ -1,0 +1,343 @@
+version: '1'
+stages:
+  git-clone-javascriptbaserepo:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "ssh://git@gitlab-wd.stackroute.in:2222/hobbes-boilerplates/baserepo-NodeJSConsoleApp.git"
+      REPOSITORY_REF: master
+      REPOSITORY_REF_TYPE: "branch"
+      WORKSPACE: "{{context.WORKSPACE}}/javascript-baserepo"
+    depends_on:
+      - validate-submission-folder-structure
+  git-clone-angularbaserepo:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "ssh://git@gitlab-wd.stackroute.in:2222/hobbes-boilerplates/baserepo-angularioApp.git"
+      REPOSITORY_REF: master
+      REPOSITORY_REF_TYPE: "branch"
+      WORKSPACE: "{{context.WORKSPACE}}/angular-baserepo"
+    depends_on:
+      - validate-submission-folder-structure
+  git-clone-submission:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "{{payload.submissionRepoUrl}}"
+      REPOSITORY_REF: "{{payload.submissionRepoRef}}"
+      REPOSITORY_REF_TYPE: "{{payload.submissionRepoReftype}}"
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+  validate-submission-folder-structure:
+    type: stackroute/unix/assertStructure
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      ASSERT_FOLDERS_EXISTS: server e2e src src/app
+      ASSERT_FILES_EXISTS: package.json tsconfig.json tslint.json src/test.ts
+      ASSERT_FOLDERS_DOES_NOT_EXISTS: node_modules
+      # ASSERT_FILES_DOES_NOT_EXISTS:
+    output:
+      payload:
+        output:
+          stage::build:
+            assert-folder-structure:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - git-clone-submission
+  git-clone-solution:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "{{payload.solutionRepoUrl}}"
+      REPOSITORY_REF: "{{payload.solutionRepoRef}}"
+      REPOSITORY_REF_TYPE: "{{payload.solutionRepoReftype}}"
+      WORKSPACE: "{{context.WORKSPACE}}/solution"
+    depends_on:
+      - validate-submission-folder-structure
+  copy-baserepo-tslint-to-submission:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "angular-baserepo/tslint.json"
+      DESTINATION: "submission/tslint.json"
+    depends_on:
+      - git-clone-submission
+      - git-clone-angularbaserepo
+  copy-baserepo-eslint:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "javascript-baserepo/.eslintrc.js"
+      DESTINATION: "submission"
+    depends_on:
+      - git-clone-submission
+      - git-clone-javascriptbaserepo
+      - validate-submission-folder-structure
+  safecopy-tslint-to-submission:
+    type: stackroute/unix/safecopy
+    input:
+      SOURCE: "solution/tslint.json"
+      DESTINATION: "submission"
+    depends_on:
+      - git-clone-submission
+      - copy-baserepo-tslint-to-submission
+      - validate-submission-folder-structure
+  safecopy-eslint-to-submission:
+    type: stackroute/unix/safecopy
+    input:
+      SOURCE: "solution/.eslintrc.js"
+      DESTINATION: "submission"
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+      - copy-baserepo-eslint
+  copy-angularbaserepo-protractor-config-submission:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "angular-baserepo/protractor-extend.conf.js"
+      DESTINATION: "submission/protractor-extend.conf.js"
+    depends_on:
+      - git-clone-submission
+      - git-clone-angularbaserepo
+  copy-commander-e2e-config-to-submission:
+    # Copy commander's protractor config file to submission
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "solution/protractor.conf.js"
+      DESTINATION: "submission/protractor.commander.conf.js"
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+  copy-commander-e2e-tests-to-submission:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "solution/e2e"
+      DESTINATION: "submission/e2eCommander"
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+  copy-baserepo-karma-config-submisson:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "angular-baserepo/karma-extend.conf.js"
+      DESTINATION: "submission/"
+    depends_on:
+      - git-clone-angularbaserepo
+      - git-clone-submission
+  copy-commander-karma-config-submission:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "solution/karma.conf.js"
+      DESTINATION: "submission/karma.commander.conf.js"
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+  delete-cadet-karma-tsconfig:
+    type: stackroute/unix/delete
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission/src"
+      FILES: tsconfig.spec.json test.ts
+    depends_on:
+      - git-clone-submission
+      - validate-submission-folder-structure
+  copy-commander-karma-tsconfig:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "solution/src/tsconfig.spec.json"
+      DESTINATION: "submission/src"
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+      - delete-cadet-karma-tsconfig
+  copy-commander-karma-testconfig:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "solution/src/test.ts"
+      DESTINATION: "submission/src"
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+      - delete-cadet-karma-tsconfig
+  delete-cadet-karma-tests:
+    type: stackroute/unix/delete
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      FILES: test
+    depends_on:
+      - git-clone-submission
+      - delete-cadet-karma-tsconfig
+      - copy-commander-karma-testconfig
+  copy-commander-karma-tests-submission:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "solution/test"
+      DESTINATION: "submission/test"
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+      - delete-cadet-karma-tests
+  install-packages:
+    type: stackroute/angulario/installdep
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      # TIMEOUT_DURATION_MS: "600000"
+      NPM_OPTIONS: -s
+      ADDITIONAL_PACKAGES_TO_INSTALL: karma-junit-reporter jasmine-reporters
+    output:
+      payload:
+        output:
+          stage::build:
+            install-packages:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - git-clone-submission
+      - copy-commander-karma-tests-submission
+      - validate-submission-folder-structure
+  build-angular-project:
+    type: stackroute/angulario/build
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TIMEOUT_DURATION_MS: "600000"
+      NPM_SCRIPT_OPTIONS: --progress false
+    output:
+      payload:
+        output:
+          stage::build:
+            UIAppbuild:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+      - install-packages
+  run-commander-karma-tests:
+    type: stackroute/angulario/karma
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TIMEOUT_DURATION_MS: "600000"
+      TEST_OUTPUT_FILE_PATTERN: "reports/karma/commandertests/karma-commander-test-result.xml"
+      REPORT_OUTPUT_DIR: "reports/karma/commandertests"
+      OVERRIDE_KARMA_CONFIG_FILE: "karma.commander.conf.js" #This is the config which should be overriden by command
+      EXTENDED_KARMA_CONFIG_FILE: "karma-extend.conf.js" #This is the config which is actually will be used
+      KARMA_REPORT_PATH: "reports/karma/commandertests/"
+      KARMA_REPORT_FILE: "karma-commander-test-result.xml"
+      # IGNORE_FILE_PATTERN: ""
+      NPM_OPTIONS: -s
+      NPM_SCRIPT_OPTIONS: --single-run true --progress false --no-sandbox --browsers ChromeHeadless
+    output:
+      payload:
+        output:
+          tests:
+            # Mapped to Cadet UI Unit Tests
+            # cadetngtests:
+            commanderUIUnitTests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-angular-project
+  run-cadet-nge2e-tests:
+    type: stackroute/nodejsmongoangularapp/nge2enodejs
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TIMEOUT_DURATION_MS: "600000"
+      TEST_OUTPUT_FILE_PATTERN: "reports/protractor/cadettests/protractor-e2etest-result.xml"
+      REPORT_OUTPUT_DIR: "reports/protractor/cadettests"
+      OVERRIDE_PROTRACTOR_CONFIG_FILE: "protractor.conf.js" #This is the config which should be overriden by command
+      EXTENDED_PROTRACTOR_CONFIG_FILE: "protractor-extend.conf.js" #This is the config which is actually will be used
+      PROTRACTOR_REPORT_PATH: "reports/protractor/cadettests/"
+      PROTRACTOR_REPORT_FILE: "protractor-e2etest-result.xml"
+      PROTRACTOR_FILE_SPECS: "./e2e/*.ts"
+      IGNORE_FILE_PATTERN: "reports/protractor/commandertests/protractor-commander-e2etest-result.xml"
+      NPM_OPTIONS: -s
+      NPM_SCRIPT_OPTIONS: --progress false
+    output:
+      payload:
+        output:
+          tests:
+            # Mapped to Cadet End-To-End tests
+            cadete2etests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-angular-project
+      - copy-angularbaserepo-protractor-config-submission
+  run-commander-nge2e-tests:
+    type: stackroute/nodejsmongoangularapp/nge2enodejs
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TIMEOUT_DURATION_MS: "600000"
+      TEST_OUTPUT_FILE_PATTERN: "reports/protractor/commandertests/protractor-commander-e2etest-result.xml"
+      REPORT_OUTPUT_DIR: "reports/protractor/commandertests"
+      OVERRIDE_PROTRACTOR_CONFIG_FILE: "protractor.commander.conf.js" #This is the config which should be overriden by command
+      EXTENDED_PROTRACTOR_CONFIG_FILE: "protractor-extend.conf.js" #This is the config which is actually will be used
+      PROTRACTOR_REPORT_PATH: "reports/protractor/commandertests/"
+      PROTRACTOR_REPORT_FILE: "protractor-commander-e2etest-result.xml"
+      PROTRACTOR_TEST_DIRECTORY: "e2eCommander"
+      PROTRACTOR_FILE_SPECS: "./e2eCommander/*.ts"
+      IGNORE_FILE_PATTERN: "reports/protractor/cadettests/protractor-e2etest-result.xml"
+      NPM_OPTIONS: -s
+      NPM_SCRIPT_OPTIONS: --progress false
+    output:
+      payload:
+        output:
+          tests:
+            # Mapped to Cadet End-To-End tests
+            commandere2etests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-angular-project
+      - copy-commander-e2e-config-to-submission
+      - copy-commander-e2e-tests-to-submission
+      - copy-angularbaserepo-protractor-config-submission
+  run-tslint:
+    type: stackroute/angulario/tslint
+    input:
+      RULES_FILE: "tslint.json"
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      NPM_OPTIONS: -s
+      NPM_SCRIPT_CMD: ng
+      NPM_SCRIPT_OPTIONS: lint --format json
+      # IGNORE_PATTERN: --ignore-pattern html/**/*.js --ignore-pattern data/**/*.js --ignore-pattern commander-UI-Test/**/*.js --ignore-pattern commander/**/*.js
+    output:
+      payload:
+        output:
+          lint:
+            # Mapped to code quality tests - TS Lint (uses TS Lint for TS files)
+            tslint:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-angular-project
+  run-eslintrc:
+    type: stackroute/javascript/eslint
+    input:
+      RULES_FILE: ".eslintrc.js"
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      YARN_OPTIONS: --silent --no-progress
+      ESLINT_OPTIONS: --quiet
+      IGNORE_PATTERN: --ignore-pattern html/**/*.js --ignore-pattern data/**/*.js --ignore-pattern commander-UI-Test/**/*.js --ignore-pattern commander/**/*.js
+    output:
+      payload:
+        output:
+          lint:
+            eslint:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - git-clone-submission
+      - safecopy-eslint-to-submission
+      - validate-submission-folder-structure
+      - install-packages

@@ -1,0 +1,16 @@
+version: '2'
+services:
+  swunix:
+    image: serviceworkers-unix:1.0.0
+    build: ./unix
+    network_mode: host
+    restart: always
+    volumes:
+      - ../languagepacks/lp_workspaces:/workspaces
+      - ../languagepacks/scripts:/temp/scripts
+    env_file: "docker-${NODE_ENV}.env"
+    entrypoint:
+      - /temp/scripts/wait-for-service.sh
+      - "0.0.0.0"
+      - "5672"
+      - "yarn start"

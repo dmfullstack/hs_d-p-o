@@ -1,0 +1,334 @@
+version: '2'
+services:
+  git:
+    image: languagepack-git:1.0.0
+    build: stackroute/git
+    # network_mode: host
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "Hobbes-Container-Logs"
+        # awslogs-stream: "Hobbes-Base-LP-Prod-git"
+        tag: "Hobbes-Base-LP-Prod-{{.Name}}"
+    restart: always
+    volumes:
+      - /nfsdata:/workspaces
+      - ./stackroute/git/ssh:/ssh
+      - ../data:/data
+    environment:
+      QUEUE_NAME: stackroute/git
+      REDIS_HOST: hobbes-dp-lp-redis.px9mbe.0001.aps1.cache.amazonaws.com
+      REDIS_PORT: 6379
+      AMQP_URL: amqp://admin:admin@10.0.0.223:5672
+
+  javascript:
+    image: languagepack-javascript:1.0.0
+    build: stackroute/javascript
+    # network_mode: host
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "Hobbes-Container-Logs"
+        # awslogs-stream: "Hobbes-Base-LP-Prod-javascript"
+        tag: "Hobbes-Base-LP-Prod-{{.Name}}"
+    restart: always
+    volumes:
+      - /nfsdata:/workspaces
+      - ../data:/data
+    environment:
+      QUEUE_NAME: stackroute/javascript
+      REDIS_HOST: hobbes-dp-lp-redis.px9mbe.0001.aps1.cache.amazonaws.com
+      REDIS_PORT: 6379
+      AMQP_URL: amqp://admin:admin@10.0.0.223:5672
+
+  nodejsmongo:
+    image: languagepack-nodejsmongo:1.0.0
+    build: stackroute/nodejsmongo
+    # network_mode: host
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "Hobbes-Container-Logs"
+        # awslogs-stream: "Hobbes-Base-LP-Prod-nodejsmongo"
+        tag: "Hobbes-Base-LP-Prod-{{.Name}}"
+    restart: always
+    volumes:
+      - /nfsdata:/workspaces
+      - ../data:/data
+    environment:
+      QUEUE_NAME: stackroute/nodejsmongo
+      MONGO_URL: 'mongodb://127.0.0.1:27017/student'
+      MONGO_HOST: 127.0.0.1
+      MONGO_PORT: 27017
+      MONGO_USER: ""
+      MONGO_PASSWORD: ""
+      REDIS_HOST: hobbes-dp-lp-redis.px9mbe.0001.aps1.cache.amazonaws.com
+      REDIS_PORT: 6379
+      AMQP_URL: amqp://admin:admin@10.0.0.223:5672
+
+  nodejscassandra:
+    image: languagepack-nodejscassandra:1.0.0
+    build: stackroute/nodejscassandra
+    # network_mode: host
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "Hobbes-Container-Logs"
+        # awslogs-stream: "Hobbes-Base-LP-Prod-nodejscassandra"
+        tag: "Hobbes-Base-LP-Prod-{{.Name}}"
+    restart: always
+    volumes:
+      - /nfsdata:/workspaces
+      - ../data:/data
+    environment:
+      QUEUE_NAME: stackroute/nodejscassandra
+      REDIS_HOST: hobbes-dp-lp-redis.px9mbe.0001.aps1.cache.amazonaws.com
+      REDIS_PORT: 6379
+      AMQP_URL: amqp://admin:admin@10.0.0.223:5672
+      CASSANDRA_KEYSPACE: cassandradb
+      CASSANDRA_URL: 'cassandra://127.0.0.1:9042/'
+      CASSANDRA_HOST: '127.0.0.1'
+      CASSANDRA_PORT: '9042'
+      CASSANDRA_USER: ''
+      CASSANDRA_PASSWORD: ''
+
+  nodejsmongoangularapp:
+    image: languagepack-nodejsmongoangularapp:1.0.0
+    build: stackroute/nodejsmongoangularapp
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "Hobbes-Container-Logs"
+        # awslogs-stream: "Hobbes-Base-LP-Prod-nodejsmongoangularapp"
+        tag: "Hobbes-Base-LP-Prod-{{.Name}}"
+    restart: always
+    volumes:
+      - /nfsdata:/workspaces
+      - ../data:/data
+    environment:
+      QUEUE_NAME: stackroute/nodejsmongoangularapp
+      MONGO_URL: 'mongodb://127.0.0.1:27017/student'
+      MONGO_HOST: 127.0.0.1
+      MONGO_PORT: 27017
+      MONGO_USER: ""
+      MONGO_PASSWORD: ""
+      REDIS_HOST: hobbes-dp-lp-redis.px9mbe.0001.aps1.cache.amazonaws.com
+      REDIS_PORT: 6379
+      AMQP_URL: amqp://admin:admin@10.0.0.223:5672
+
+  angulario:
+    image: languagepack-angulario:1.0.0
+    build: stackroute/angulario
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "Hobbes-Container-Logs"
+        # awslogs-stream: "Hobbes-Base-LP-Prod-angulario"
+        tag: "Hobbes-Base-LP-Prod-{{.Name}}"
+    restart: always
+    volumes:
+      - /nfsdata:/workspaces
+      - ../data:/data
+    environment:
+      QUEUE_NAME: stackroute/angulario
+      REDIS_HOST: hobbes-dp-lp-redis.px9mbe.0001.aps1.cache.amazonaws.com
+      REDIS_PORT: 6379
+      AMQP_URL: amqp://admin:admin@10.0.0.223:5672
+
+  openjdk8maven:
+    image: languagepack-openjdk8maven:1.0.0
+    build: stackroute/openjdk8maven
+    # network_mode: host
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "Hobbes-Container-Logs"
+        # awslogs-stream: "Hobbes-Base-LP-Prod-openjdk8maven"
+        tag: "Hobbes-Base-LP-Prod-{{.Name}}"
+    restart: always
+    volumes:
+      - /nfsdata:/workspaces
+      - ../data:/data
+      - ../mavenrepo/:/maven/home/
+      - ./resourcesToMount/pmd:/pmd
+    environment:
+      QUEUE_NAME: stackroute/openjdk8maven
+      REDIS_HOST: hobbes-dp-lp-redis.px9mbe.0001.aps1.cache.amazonaws.com
+      REDIS_PORT: 6379
+      AMQP_URL: amqp://admin:admin@10.0.0.223:5672
+      MVN_LOCAL_REPO: /maven/home/
+
+  openjdk8mysql:
+    image: languagepack-openjdk8mysql:1.0.0
+    build: stackroute/openjdk8mysql
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "Hobbes-Container-Logs"
+        # awslogs-stream: "Hobbes-Base-LP-Prod-openjdk8mysql"
+        tag: "Hobbes-Base-LP-Prod-{{.Name}}"
+    restart: always
+    volumes:
+      - /nfsdata:/workspaces
+      - ../data:/data
+      - ../mavenrepo/:/maven/home/
+      - ./resourcesToMount/pmd:/pmd
+    environment:
+      QUEUE_NAME: stackroute/openjdk8mysql
+      REDIS_HOST: hobbes-dp-lp-redis.px9mbe.0001.aps1.cache.amazonaws.com
+      REDIS_PORT: 6379
+      AMQP_URL: amqp://admin:admin@10.0.0.223:5672
+      MVN_LOCAL_REPO: /maven/home/
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_ROOT_HOST: 127.0.0.1
+      MYSQL_LP_AC: root
+      MYSQL_LP_ACP: ''
+      MYSQL_HOST: localhost
+      MYSQL_USER: student
+      MYSQL_PASSWORD: student
+      MYSQL_DATABASE: student
+
+  openjdk8springangularmysqlapp:
+    image: languagepack-openjdk8springangularmysqlapp:1.0.0
+    build: stackroute/openjdk8springangularmysqlapp
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "Hobbes-Container-Logs"
+        # awslogs-stream: "Hobbes-Base-LP-Prod-openjdk8springangularmysqlapp"
+        tag: "Hobbes-Base-LP-Prod-{{.Name}}"
+    restart: always
+    volumes:
+      - /nfsdata:/workspaces
+      - ../data:/data
+      - ../mavenrepo/:/maven/home/
+      - ./resourcesToMount/pmd:/pmd
+    environment:
+      QUEUE_NAME: stackroute/openjdk8springangularmysqlapp
+      REDIS_HOST: hobbes-dp-lp-redis.px9mbe.0001.aps1.cache.amazonaws.com
+      REDIS_PORT: 6379
+      AMQP_URL: amqp://admin:admin@10.0.0.223:5672
+      MVN_LOCAL_REPO: /maven/home/
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_ROOT_HOST: 127.0.0.1
+      MYSQL_LP_AC: root
+      MYSQL_LP_ACP: ''
+      MYSQL_HOST: localhost
+      MYSQL_USER: student
+      MYSQL_PASSWORD: student
+      MYSQL_DATABASE: student
+
+  openjdk8springmysqlmongoapp:
+    image: languagepack-openjdk8springmysqlmongoapp:1.0.0
+    build: stackroute/openjdk8springmysqlmongoapp
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "Hobbes-Container-Logs"
+        # awslogs-stream: "Hobbes-Base-LP-Prod-openjdk8springmysqlmongoapp"
+        tag: "Hobbes-Base-LP-Prod-{{.Name}}"
+    restart: always
+    volumes:
+      - /nfsdata:/workspaces
+      - ../data:/data
+      - ../mavenrepo/:/maven/home/
+      - ./resourcesToMount/pmd:/pmd
+    environment:
+      QUEUE_NAME: stackroute/openjdk8springmysqlmongoapp
+      REDIS_HOST: hobbes-dp-lp-redis.px9mbe.0001.aps1.cache.amazonaws.com
+      REDIS_PORT: 6379
+      AMQP_URL: amqp://admin:admin@10.0.0.223:5672
+      MVN_LOCAL_REPO: /maven/home/
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_ROOT_HOST: 127.0.0.1
+      MYSQL_LP_AC: root
+      MYSQL_LP_ACP: ''
+      MYSQL_HOST: localhost
+      MYSQL_USER: student
+      MYSQL_PASSWORD: student
+      MYSQL_DATABASE: student
+      MONGO_URL: 'mongodb://127.0.0.1:27017/student'
+      MONGO_HOST: 127.0.0.1
+      MONGO_PORT: 27017
+      MONGO_USER: ""
+      MONGO_PASSWORD: ""
+
+  phantomjs:
+    image: languagepack-phantomjs:1.0.0
+    build: stackroute/phantomjs
+    # network_mode: host
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "Hobbes-Container-Logs"
+        # awslogs-stream: "Hobbes-Base-LP-Prod-phantomjs"
+        tag: "Hobbes-Base-LP-Prod-{{.Name}}"
+    restart: always
+    volumes:
+      - /nfsdata:/workspaces
+      - ../data:/data
+    environment:
+      QUEUE_NAME: stackroute/phantomjs
+      REDIS_HOST: hobbes-dp-lp-redis.px9mbe.0001.aps1.cache.amazonaws.com
+      REDIS_PORT: 6379
+      AMQP_URL: amqp://admin:admin@10.0.0.223:5672
+
+  unix:
+    image: languagepack-unix:1.0.0
+    build: stackroute/unix
+    # network_mode: host
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "Hobbes-Container-Logs"
+        # awslogs-stream: "Hobbes-Base-LP-Prod-unix"
+        tag: "Hobbes-Base-LP-Prod-{{.Name}}"
+    restart: always
+    volumes:
+      - /nfsdata:/workspaces
+      - ../data:/data
+    environment:
+      QUEUE_NAME: stackroute/unix
+      REDIS_HOST: hobbes-dp-lp-redis.px9mbe.0001.aps1.cache.amazonaws.com
+      REDIS_PORT: 6379
+      AMQP_URL: amqp://admin:admin@10.0.0.223:5672
+
+  sonarqube:
+    image: languagepack-sonarqube:1.0.0
+    build: stackroute/sonarqube
+    # network_mode: host
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-region: "ap-south-1"
+        awslogs-group: "Hobbes-Container-Logs"
+        # awslogs-stream: "Hobbes-Base-LP-Prod-sonarqube"
+        tag: "Hobbes-Base-LP-Prod-{{.Name}}"
+    restart: always
+    volumes:
+      - /nfsdata:/workspaces
+      - ../data:/data
+    environment:
+      QUEUE_NAME: stackroute/sonarqube
+      SONAR_SERVER: http://server0.lab.stackroute.in:9000
+      AMQP_URL: amqp://admin:admin@10.0.0.223:5672
+      REDIS_HOST: hobbes-dp-lp-redis.px9mbe.0001.aps1.cache.amazonaws.com
+      REDIS_PORT: 6379
+
+  # sonarqube-server:
+  #   image: sonarqube:alpine
+  #   ports:
+  #     - 9000:9000
+  #     - 9092:9092

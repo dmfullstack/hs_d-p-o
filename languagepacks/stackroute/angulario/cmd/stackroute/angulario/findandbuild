@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# in this will install dependency and then building
+set -e
+
+echo building project in $WORKSPACE
+
+cd $WORKSPACE
+
+# remove dist folder, so that angualr build is cleanly built for evaluation, it is possible submission might have been made with dist folder
+rm -rf dist
+
+echo Running angular build with options $NPM_SCRIPT_OPTIONS
+
+# Finding the target directory to run the build
+TARGET_FOLDER_TO_BUILD=$(find -maxdepth $MAX_DEPTH -type d $EXCLUDE_FOLDERS_TO_BUILD)
+
+echo Directory to run the build is $TARGET_FOLDER_TO_BUILD
+
+cd $TARGET_FOLDER_TO_BUILD
+
+npm run build -- $NPM_SCRIPT_OPTIONS
+
+echo Build completed..!

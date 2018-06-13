@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+
+echo building application in $WORKSPACE ' '
+
+cd $WORKSPACE
+
+dotnet build

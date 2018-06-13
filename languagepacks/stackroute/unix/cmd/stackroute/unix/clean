@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -e
+
+echo deleting workspace $WORKSPACE
+
+rm -rf $WORKSPACE
+
+# This is to ensure all I/O commands are synchronized before next command
+sync

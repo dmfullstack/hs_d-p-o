@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -e
+
+echo JUnit testing project in $WORKSPACE with maven home as $MVN_LOCAL_REPO
+
+cd $WORKSPACE
+
+echo Setting MySQL environment variables for the app [$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST/$MYSQL_DATABASE]
+
+# mvn -Dmaven.repo.local=$MVN_LOCAL_REPO test
+
+# /bin/sh -c mvn -Dmaven.repo.local=$MVN_LOCAL_REPO test
+mvn -Dmaven.repo.local=$MVN_LOCAL_REPO -DMYSQL_HOST=${MYSQL_HOST} -DMYSQL_USER=${MYSQL_USER} -DMYSQL_PASSWORD=${MYSQL_PASSWORD} -DMYSQL_DATABASE=${MYSQL_DATABASE} test

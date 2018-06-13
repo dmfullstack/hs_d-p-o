@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+
+echo running tests of the project in $TEST_FOLDER with the format $OUTPUT_FILE
+
+cd $TEST_FOLDER
+
+# dotnet xunit -xml $OUTPUT_FILE
+
+dotnet test --logger $OUTPUT_FILE

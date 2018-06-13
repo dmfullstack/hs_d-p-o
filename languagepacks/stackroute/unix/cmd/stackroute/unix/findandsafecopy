@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -e
+
+# This is to ensure all I/O commands are synchronized before next command
+sync
+
+echo "Copying without throwing any error, even if the source does not exist..!"
+echo SOURCE $TARGET_ROOT_DIRECTORY
+echo this is the WORKSPACE $WORKSPACE
+cd $WORKSPACE
+
+# Finding the directory to copy from source to destination
+TARGET=$(find $TARGET_ROOT_DIRECTORY -maxdepth $MAX_DEPTH -type $FILE_TYPE $EXCLUDE_FOLDERS_TO_COPY)
+
+echo DESTINATION $TARGET
+
+echo Copying $SOURCE_ROOT_DIRECTORY to $TARGET
+
+cp -r $SOURCE $TARGET 2>/dev/null || :
+
+# This is to ensure all I/O commands are synchronized before next command
+sync

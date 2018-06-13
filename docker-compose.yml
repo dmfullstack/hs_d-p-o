@@ -1,0 +1,16 @@
+version: '2'
+services:
+  orchestrator:
+    image: dp-orchestrator:0.1.0
+    build: .
+    network_mode: host
+    logging:
+        driver: "awslogs"
+        options:
+            awslogs-region: "ap-south-1"
+            awslogs-group: "Hobbes-Container-Logs"
+            awslogs-stream: "Hobbes-Base-DP-Orch-Prod-orchestrator"
+    ports:
+      - 8081:8081
+    restart: always
+    env_file: "docker-${NODE_ENV}.env"

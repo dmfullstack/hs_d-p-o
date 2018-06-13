@@ -1,0 +1,137 @@
+version: '1'
+stages:
+  git-clone-submission:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "{{payload.submissionRepoUrl}}"
+      REPOSITORY_REF: "{{payload.submissionRepoRef}}"
+      REPOSITORY_REF_TYPE: "{{payload.submissionRepoReftype}}"
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+  git-clone-solution:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "{{payload.solutionRepoUrl}}"
+      REPOSITORY_REF: "{{payload.solutionRepoRef}}"
+      REPOSITORY_REF_TYPE: "{{payload.solutionRepoReftype}}"
+      WORKSPACE: "{{context.WORKSPACE}}/solution"
+  validate-submission-folder-structure:
+    type: stackroute/unix/findandassertStructure
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      ASSERT_FOLDERS_EXISTS: ''
+      ASSERT_FILES_EXISTS: Program.cs *.csproj appsettings.json
+      ASSERT_FOLDERS_DOES_NOT_EXISTS: obj bin
+      TARGET_ROOT_DIRECTORY: .
+      EXCLUDE_FOLDERS_TO_ASSERT: "! -name commander ! -name test ! -name .git ! -name solution ! -name angular-baserepo ! -name .scannerwork ! -name . "
+      MAX_DEPTH: "1"
+      FILE_TYPE: d
+    output:
+      payload:
+        output:
+          stage::build:
+            assert-folder-structure:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - git-clone-submission      
+  delete-data-directory:
+    type: stackroute/unix/delete
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      FILES: data
+    depends_on:
+      - git-clone-submission
+      - validate-submission-folder-structure
+  link-data-directory:
+    type: stackroute/unix/link
+    input:
+      SOURCE: /data
+      DESTINATION: "{{context.WORKSPACE}}/submission"
+    depends_on:
+      - delete-data-directory
+  delete-output-directory:
+    type: stackroute/unix/delete
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      FILES: output
+    depends_on:
+      - git-clone-submission
+      - validate-submission-folder-structure
+  create-output-directory:
+    type: stackroute/unix/mkdir
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      FILES: output
+    depends_on:
+      - delete-output-directory
+  copy-commandertests-to-submission:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "solution/commander"
+      DESTINATION: "submission/commander"
+    depends_on:
+      - git-clone-solution
+      - git-clone-submission
+      - validate-submission-folder-structure
+  build-dotnet-project:
+    type: stackroute/dotnetapp/findandbuild
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      MAX_DEPTH: "1"
+      # Ignoring the directories which are not required to run the build
+      EXCLUDE_FOLDERS_TO_BUILD: "! -name commander ! -name test ! -name .git ! -name data ! -name output ! -name ."
+      CMD: "dotnet build"
+      FILE_TYPE: d
+    output:
+      payload:
+        output:
+          stage::build:
+            dotnetBuild:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - git-clone-submission
+      - validate-submission-folder-structure
+  run-cadet-tests:
+    type: stackroute/dotnetmssqlapp/test
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TEST_FOLDER: "{{context.WORKSPACE}}/submission/test"
+      REPORT_OUTPUT_FILE: "{{context.WORKSPACE}}/submission/test/TestResults/testResults.xml"
+      # Format of the output file which will be produced after running the tests
+      OUTPUT_FILE: 'trx;LogFileName=testResults.xml'
+    output:
+      payload:
+        output:
+          tests:
+            cadetTests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-dotnet-project
+  run-commander-tests:
+    type: stackroute/dotnetmssqlapp/test
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TEST_FOLDER: "{{context.WORKSPACE}}/submission/commander"            
+      REPORT_OUTPUT_FILE: "{{context.WORKSPACE}}/submission/commander/TestResults/commanderResults.xml"
+      # Format of the output file which will be produced after running the tests      
+      OUTPUT_FILE: "trx;LogFileName=commanderResults.xml"
+    output:
+      payload:
+        output:
+          tests:
+            commanderTests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-dotnet-project
+      - copy-commandertests-to-submission

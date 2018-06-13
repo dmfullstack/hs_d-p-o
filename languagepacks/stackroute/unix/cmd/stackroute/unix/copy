@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -e
+
+# This is to ensure all I/O commands are synchronized before next command
+sync
+
+echo SOURCE $SOURCE
+echo DESTINATION $DESTINATION
+echo WORKSPACE $WORKSPACE
+cd $WORKSPACE
+cp -r $SOURCE $DESTINATION
+
+# This is to ensure all I/O commands are synchronized before next command
+sync

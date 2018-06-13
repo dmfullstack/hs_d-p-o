@@ -1,0 +1,352 @@
+version: '1'
+stages:
+  git-clone-baserepo:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "ssh://git@gitlab-wd.stackroute.in:2222/hobbes-boilerplates/baserepo-angularioApp.git"
+      REPOSITORY_REF: master
+      REPOSITORY_REF_TYPE: "branch"
+      WORKSPACE: "{{context.WORKSPACE}}/baseRepo"
+  git-clone-submission:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "{{payload.submissionRepoUrl}}"
+      REPOSITORY_REF: "{{payload.submissionRepoRef}}"
+      REPOSITORY_REF_TYPE: "{{payload.submissionRepoReftype}}"
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+  git-clone-solution:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "{{payload.solutionRepoUrl}}"
+      REPOSITORY_REF: "{{payload.solutionRepoRef}}"
+      REPOSITORY_REF_TYPE: "{{payload.solutionRepoReftype}}"
+      WORKSPACE: "{{context.WORKSPACE}}/solution"
+  validate-submission-folder-structure:
+    type: stackroute/unix/assertStructure
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      ASSERT_FOLDERS_EXISTS: e2e src src/app
+      ASSERT_FILES_EXISTS: package.json tsconfig.json tslint.json src/test.ts
+      ASSERT_FOLDERS_DOES_NOT_EXISTS: node_modules
+      # ASSERT_FILES_DOES_NOT_EXISTS:
+    output:
+      payload:
+        output:
+          stage::build:
+            assert-folder-structure:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - git-clone-submission
+  delete-data-directory:
+    type: stackroute/unix/delete
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      FILES: data
+    depends_on:
+      - git-clone-submission
+      - validate-submission-folder-structure
+  delete-output-directory:
+    type: stackroute/unix/delete
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      FILES: output
+    depends_on:
+      - git-clone-submission
+      - validate-submission-folder-structure
+  create-output-directory:
+    type: stackroute/unix/mkdir
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      FILES: output
+    depends_on:
+      - delete-output-directory
+  link-data-directory:
+    type: stackroute/unix/link
+    input:
+      SOURCE: /data
+      DESTINATION: "{{context.WORKSPACE}}/submission"
+    depends_on:
+      - delete-data-directory
+  copy-baserepo-tslint-to-submission:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "baseRepo/tslint.json"
+      DESTINATION: "submission/"
+    depends_on:
+      - git-clone-baserepo
+      - git-clone-submission
+      - validate-submission-folder-structure
+  safecopy-tslint-solution-to-submission:
+    type: stackroute/unix/safecopy
+    input:
+      SOURCE: "solution/tslint.json"
+      DESTINATION: "submission/"
+    depends_on:
+      - git-clone-submission
+      - copy-baserepo-tslint-to-submission
+  copy-baserepo-karma-config-submisson:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "baseRepo/karma-extend.conf.js"
+      DESTINATION: "submission/"
+    depends_on:
+      - git-clone-baserepo
+      - git-clone-submission
+      - validate-submission-folder-structure
+  copy-baserepo-protractor-config-submission:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "baseRepo/protractor-extend.conf.js"
+      DESTINATION: "submission/"
+    depends_on:
+      - git-clone-baserepo
+      - git-clone-submission
+      - validate-submission-folder-structure
+  copy-commander-karma-config-submission:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "solution/karma.conf.js"
+      DESTINATION: "submission/karma.commander.conf.js"
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+      - validate-submission-folder-structure
+  delete-cadet-karma-tsconfig:
+    type: stackroute/unix/delete
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission/src"
+      FILES: tsconfig.spec.json test.ts
+    depends_on:
+      - git-clone-submission
+      - validate-submission-folder-structure
+  copy-commander-karma-tsconfig:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "solution/src/tsconfig.spec.json"
+      DESTINATION: "submission/src"
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+      - delete-cadet-karma-tsconfig
+  copy-commander-karma-testconfig:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "solution/src/test.ts"
+      DESTINATION: "submission/src"
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+      - delete-cadet-karma-tsconfig
+  delete-cadet-karma-tests:
+    type: stackroute/unix/delete
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      FILES: test
+    depends_on:
+      - git-clone-submission
+      - delete-cadet-karma-tsconfig
+  copy-commander-karma-tests-submission:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "solution/test"
+      DESTINATION: "submission/test"
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+      - delete-cadet-karma-tests
+      - validate-submission-folder-structure
+  copy-commander-protractor-config-submission:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "solution/protractor.conf.js"
+      DESTINATION: "submission/protractor.commander.conf.js"
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+      - validate-submission-folder-structure
+  copy-commander-e2e-tests-submission:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "solution/e2e"
+      DESTINATION: "submission/e2eCommander"
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+      - validate-submission-folder-structure
+  install-packages:
+    type: stackroute/angulario/installdep
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      # TIMEOUT_DURATION_MS: "600000"
+      NPM_OPTIONS: -s
+      ADDITIONAL_PACKAGES_TO_INSTALL: karma-junit-reporter jasmine-reporters
+    output:
+      payload:
+        output:
+          stage::build:
+            install-packages:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - git-clone-submission
+      - delete-cadet-karma-tests
+      - copy-commander-karma-tests-submission
+      - validate-submission-folder-structure
+  build-angular-project:
+    type: stackroute/angulario/build
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TIMEOUT_DURATION_MS: "300000"
+      NPM_SCRIPT_OPTIONS: --progress false
+    output:
+      payload:
+        output:
+          stage::build:
+            UIAppbuild:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - install-packages
+
+  run-commander-karma-tests:
+    type: stackroute/angulario/karma
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TEST_OUTPUT_FILE_PATTERN: "reports/karma/commandertests/karma-commander-test-result.xml"
+      REPORT_OUTPUT_DIR: "reports/karma/commandertests"
+      OVERRIDE_KARMA_CONFIG_FILE: "karma.commander.conf.js" #This is the config which should be overriden by command
+      EXTENDED_KARMA_CONFIG_FILE: "karma-extend.conf.js" #This is the config which is actually will be used
+      KARMA_REPORT_PATH: "reports/karma/commandertests/"
+      KARMA_REPORT_FILE: "karma-commander-test-result.xml"
+      # IGNORE_FILE_PATTERN: ""
+      NPM_OPTIONS: -s
+      NPM_SCRIPT_OPTIONS: --single-run true --progress false --no-sandbox --browsers ChromeHeadless
+    output:
+      payload:
+        output:
+          tests:
+            # Mapped to Cadet UI Unit Tests
+            # cadetngtests:
+            commanderUIUnitTests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-angular-project
+      - copy-baserepo-karma-config-submisson
+      - copy-commander-karma-config-submission
+      - copy-commander-karma-tests-submission
+
+  # run-cadet-karma-tests:
+  #   type: stackroute/angulario/karma
+  #   input:
+  #     WORKSPACE: "{{context.WORKSPACE}}/submission"
+  #     TEST_OUTPUT_FILE_PATTERN: "reports/karma/cadettests/karma-test-result.xml"
+  #     REPORT_OUTPUT_DIR: "reports/karma/cadettests"
+  #     OVERRIDE_KARMA_CONFIG_FILE: "karma.conf.js" #This is the config which should be overriden by command
+  #     EXTENDED_KARMA_CONFIG_FILE: "karma-extend.conf.js" #This is the config which is actually will be used
+  #     KARMA_REPORT_PATH: "reports/karma/cadettests/"
+  #     KARMA_REPORT_FILE: "karma-test-result.xml"
+  #     # IGNORE_FILE_PATTERN: ""
+  #     NPM_OPTIONS: -s
+  #     NPM_SCRIPT_OPTIONS: --single-run true --progress false --no-sandbox --browsers ChromeHeadless
+  #   output:
+  #     payload:
+  #       output:
+  #         tests:
+  #           # Mapped to Cadet UI Unit Tests
+  #           # cadetngtests:
+  #           cadetUIUnitTests:
+  #             status: \{\{EXITCODE\}\}
+  #             output: \{\{OUTPUT\}\}
+  #             errors: \{\{ERRORS\}\}
+  #             summary: \{\{SUMMARY\}\}
+  #   depends_on:
+  #     - build-angular-project
+  #     - copy-baserepo-karma-config-submisson
+  run-cadet-e2e-tests:
+    type: stackroute/angulario/protractor
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TEST_OUTPUT_FILE_PATTERN: "reports/protractor/cadettests/protractor-e2etest-result.xml"
+      REPORT_OUTPUT_DIR: "reports/protractor/cadettests"
+      OVERRIDE_PROTRACTOR_CONFIG_FILE: "protractor.conf.js" #This is the config which should be overriden by command
+      EXTENDED_PROTRACTOR_CONFIG_FILE: "protractor-extend.conf.js" #This is the config which is actually will be used
+      PROTRACTOR_REPORT_PATH: "reports/protractor/cadettests/"
+      PROTRACTOR_REPORT_FILE: "protractor-e2etest-result.xml"
+      PROTRACTOR_FILE_SPECS: "./e2e/**/*e2e-spec.ts"
+      IGNORE_FILE_PATTERN: "reports/protractor/commandertests/protractor-commander-e2etest-result.xml"
+      NPM_OPTIONS: -s
+      NPM_SCRIPT_OPTIONS: --progress false
+    output:
+      payload:
+        output:
+          tests:
+            # Mapped to Cadet End-To-End tests
+            cadete2etests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-angular-project
+      - copy-baserepo-protractor-config-submission
+  run-commander-e2e-tests:
+    type: stackroute/angulario/protractor
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      TEST_OUTPUT_FILE_PATTERN: "reports/protractor/commandertests/protractor-commander-e2etest-result.xml"
+      REPORT_OUTPUT_DIR: "reports/protractor/commandertests"
+      OVERRIDE_PROTRACTOR_CONFIG_FILE: "protractor.commander.conf.js" #This is the config which should be overriden by command
+      EXTENDED_PROTRACTOR_CONFIG_FILE: "protractor-extend.conf.js" #This is the config which is actually will be used
+      PROTRACTOR_REPORT_PATH: "reports/protractor/commandertests/"
+      PROTRACTOR_REPORT_FILE: "protractor-commander-e2etest-result.xml"
+      PROTRACTOR_FILE_SPECS: "./e2eCommander/**/*e2e-spec.ts"
+      PROTRACTOR_TEST_DIRECTORY: "e2eCommander"
+      NPM_OPTIONS: -s
+      NPM_SCRIPT_OPTIONS: --progress false
+    output:
+      payload:
+        output:
+          tests:
+            # Mapped to Cadet End-To-End tests
+            commandere2etests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-angular-project
+      - copy-baserepo-protractor-config-submission
+      - copy-commander-e2e-tests-submission
+      - copy-commander-protractor-config-submission
+  run-tslint:
+    type: stackroute/angulario/tslint
+    input:
+      RULES_FILE: "tslint.json"
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      NPM_OPTIONS: -s
+      NPM_SCRIPT_CMD: ng
+      NPM_SCRIPT_OPTIONS: lint --format json
+      # IGNORE_PATTERN: --ignore-pattern html/**/*.js --ignore-pattern data/**/*.js --ignore-pattern commander-UI-Test/**/*.js --ignore-pattern commander/**/*.js
+    output:
+      payload:
+        output:
+          lint:
+            # Mapped to code quality tests - TS Lint (uses TS Lint for TS files)
+            tslint:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-angular-project
+      - safecopy-tslint-solution-to-submission

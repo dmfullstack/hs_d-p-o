@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+echo executing htmlhint in $WORKSPACE
+echo ignoring files $IGNORE_FILES
+
+cd $WORKSPACE
+
+htmlhint --format json --ignore $IGNORE_FILES

@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+echo executing eslintrc in $WORKSPACE
+echo ignoring patterns $IGNORE_PATTERN
+cd $WORKSPACE
+
+# install here so that we can run eslint from node_modules
+#yarn add eslint $YARN_OPTIONS
+# eslint **/*.js -f json
+npm install --save-dev eslint $YARN_OPTIONS
+
+ #eslint --format json **/*.js !node_modules/**
+
+#eslint --format json **/*.js $IGNORE_PATTERN
+./node_modules/.bin/eslint --format json ./**/*.js $IGNORE_PATTERN $ESLINT_OPTIONS
+# eslint --format=node_modules/eslint-json index.js

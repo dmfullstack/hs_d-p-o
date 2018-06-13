@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+echo Verify for PMD checks in $WORKSPACE at path $BASE_PATH by running pmd from $PMD_HOME
+
+cd $WORKSPACE
+
+# sh /pmd/bin/run.sh pmd -d $DIR -f xml -R $RULES_FILE -r $TARGET_FILE
+# sh /pmd/bin/run.sh pmd -d $WORKSPACE/**/src/**/*.java -f xml -R $RULES_FILE -r $TARGET_FILE
+# sh /pmd/bin/run.sh pmd -d $WORKSPACE -f xml -R $RULES_FILE -r $TARGET_PATH/pmdResult.xml
+sh $PMD_HOME/bin/run.sh pmd -d $BASE_PATH -f xml -R $RULES_FILE -r $REPORT_OUTPUT_FILE -failOnViolation false

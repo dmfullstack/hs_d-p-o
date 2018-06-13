@@ -1,0 +1,21 @@
+#!/bin/sh
+
+set -e
+
+echo installing $ADDITIONAL_PACKAGES_TO_INSTALL in $WORKSPACE
+
+cd $WORKSPACE
+
+
+# echo "this is the file to build " $(find -maxdepth $MAX_DEPTH -type d $EXCLUDE_FILES_TO_BUILD)
+
+# finding the target folder to run the npm install 
+TARGET_FOLDER_TO_BUILD=$(find -maxdepth $MAX_DEPTH -type d $EXCLUDE_FOLDERS_TO_BUILD)
+
+echo Directory to run the installation $TARGET_FOLDER_TO_BUILD
+
+cd $TARGET_FOLDER_TO_BUILD
+
+npm install $NPM_OPTIONS npm install $ADDITIONAL_PACKAGES_TO_INSTALL
+
+echo "completed installing dependencies..!"

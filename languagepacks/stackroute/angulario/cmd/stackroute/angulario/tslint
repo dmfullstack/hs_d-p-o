@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# in this we will run tslint rules
+set -e
+
+echo executing TS Lint in $WORKSPACE
+
+# echo ignoring patterns $IGNORE_PATTERN
+
+cd $WORKSPACE
+
+echo running with NPM_OPTIONS as $NPM_OPTIONS
+
+echo "-----------------------------------"
+
+# NPM_SCRIPT_OPTIONS gives the tslint result in json structure '--format json'
+echo passing NPM_SCRIPT_OPTIONS as $NPM_SCRIPT_OPTIONS for command $NPM_SCRIPT_CMD
+
+npm run $NPM_SCRIPT_CMD $NPM_OPTIONS -- $NPM_SCRIPT_OPTIONS

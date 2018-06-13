@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+
+echo WORKSPACE $WORKSPACE
+echo SONAR_SERVER $SONAR_SERVER
+echo COMMIT_ID $COMMIT_ID
+
+cd $WORKSPACE
+
+/opt/sonar-scanner-3.0.1.733-linux/bin/sonar-scanner \
+  -Dsonar.host.url=$SONAR_SERVER \
+  -Dsonar.projectKey=$COMMIT_ID \
+  -Dsonar.projectName=$COMMIT_ID \
+  -Dsonar.projectVersion=$COMMIT_ID \
+  -Dsonar.sources=. \
+  -Dsonar.exclusions=node_modules/**/*

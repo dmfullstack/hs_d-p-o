@@ -1,0 +1,16 @@
+#Bootstrap assignment
+version: "1"
+stages:
+  git-clone-submission:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "{{payload.submissionRepoUrl}}"
+      BRANCH: master
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+  git-clone-solution:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "{{payload.solutionRepoUrl}}"
+      BRANCH: master
+      WORKSPACE: "{{context.WORKSPACE}}/solution"
+          

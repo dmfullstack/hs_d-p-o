@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+echo cloning $REPOSITORY_URL from $REPOSITORY_REF_TYPE $REPOSITORY_REF to $WORKSPACE
+
+mkdir -p $WORKSPACE
+#Configure Private Key for git commands
+export GIT_SSH_COMMAND="ssh -o \"StrictHostKeyChecking no\" -i /ssh/id_rsa"
+
+# assuming REPOSITORY_REF_TYPE will be branch as of now, we have to change to support other types
+git clone $REPOSITORY_URL -b $REPOSITORY_REF $WORKSPACE

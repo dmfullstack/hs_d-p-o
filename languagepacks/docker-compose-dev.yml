@@ -1,0 +1,480 @@
+version: '2'
+services:
+
+  git:
+    image: languagepack-git:1.0.0
+    build: stackroute/git
+    restart: always
+    volumes:
+      - ./lp_workspaces:/workspaces
+      - ./stackroute/git/ssh:/ssh
+      - ../data:/data
+      - ./scripts:/temp/scripts
+    environment:
+      QUEUE_NAME: stackroute/git
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+    depends_on:
+      - rabbitmq
+      - redis
+    links:
+      - rabbitmq
+      - redis
+    entrypoint:
+      - /temp/scripts/wait-for-service.sh
+      - "rabbitmq"
+      - "5672"
+      - "yarn start"
+
+  javascript:
+    image: languagepack-javascript:1.0.0
+    build: stackroute/javascript
+    restart: always
+    volumes:
+      - ./lp_workspaces:/workspaces
+      - ../data:/data
+      - ./scripts:/temp/scripts
+    environment:
+      QUEUE_NAME: stackroute/javascript
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+    depends_on:
+      - rabbitmq
+      - redis
+    links:
+      - rabbitmq
+      - redis
+    entrypoint:
+      - /temp/scripts/wait-for-service.sh
+      - "rabbitmq"
+      - "5672"
+      - "yarn start"
+
+  nodejsmongo:
+    image: languagepack-nodejsmongo:1.0.0
+    build: stackroute/nodejsmongo
+    restart: always
+    volumes:
+      - ./lp_workspaces:/workspaces
+      - ../data:/data
+      - ./scripts:/temp/scripts
+    environment:
+      QUEUE_NAME: stackroute/nodejsmongo
+      MONGO_URL: 'mongodb://127.0.0.1:27017/student'
+      MONGO_HOST: 127.0.0.1
+      MONGO_PORT: 27017
+      MONGO_USER: ""
+      MONGO_PASSWORD: ""
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+    depends_on:
+      - rabbitmq
+      - redis
+    links:
+      - rabbitmq
+      - redis
+    entrypoint:
+      - /temp/scripts/wait-for-service.sh
+      - "rabbitmq"
+      - "5672"
+      - "yarn boot"
+
+  # nodejscassandra:
+  #   image: languagepack-nodejscassandra:1.0.0
+  #   build: stackroute/nodejscassandra
+  #   restart: always
+  #   volumes:
+  #     - ./lp_workspaces:/workspaces
+  #     - ../data:/data
+  #     - ./scripts:/temp/scripts
+  #   environment:
+  #     QUEUE_NAME: stackroute/nodejscassandra
+  #     REDIS_HOST: redis
+  #     AMQP_URL: 'amqp://rabbitmq'
+  #     CASSANDRA_KEYSPACE: cassandradb
+  #     CASSANDRA_URL: 'cassandra://127.0.0.1:9042/'
+  #     CASSANDRA_HOST: '127.0.0.1'
+  #     CASSANDRA_PORT: '9042'
+  #     CASSANDRA_USER: ''
+  #     CASSANDRA_PASSWORD: ''
+  #   depends_on:
+  #     - rabbitmq
+  #     - redis
+  #   links:
+  #     - rabbitmq
+  #     - redis
+  #   entrypoint:
+  #     - /temp/scripts/wait-for-service.sh
+  #     - "rabbitmq"
+  #     - "5672"
+  #     - "yarn boot"
+
+  nodejsmongoangularapp:
+    image: languagepack-nodejsmongoangularapp:1.0.0
+    build: stackroute/nodejsmongoangularapp
+    restart: always
+    volumes:
+      - ./lp_workspaces:/workspaces
+      - ../data:/data
+      - ./scripts:/temp/scripts
+    environment:
+      QUEUE_NAME: stackroute/nodejsmongoangularapp
+      MONGO_URL: 'mongodb://127.0.0.1:27017/student'
+      MONGO_HOST: 127.0.0.1
+      MONGO_PORT: 27017
+      MONGO_USER: ""
+      MONGO_PASSWORD: ""
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+    depends_on:
+      - rabbitmq
+      - redis
+    links:
+      - rabbitmq
+      - redis
+    entrypoint:
+      - /temp/scripts/sleepUntil.sh
+      - "20s"
+      - "yarn boot"
+
+  angulario:
+    image: languagepack-angulario:1.0.0
+    build: stackroute/angulario
+    restart: always
+    volumes:
+      - ./lp_workspaces:/workspaces
+      - ../data:/data
+      - ./scripts:/temp/scripts
+    environment:
+      QUEUE_NAME: stackroute/angulario
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+    depends_on:
+      - rabbitmq
+      - redis
+    links:
+      - rabbitmq
+      - redis
+    entrypoint:
+      - /temp/scripts/wait-for-service.sh
+      - "rabbitmq"
+      - "5672"
+      - "yarn start"
+
+  openjdk8maven:
+    image: languagepack-openjdk8maven:1.0.0
+    build: stackroute/openjdk8maven
+    restart: always
+    volumes:
+      - ./lp_workspaces:/workspaces
+      - ../data:/data
+      - ./scripts:/temp/scripts
+      - ~/.m2/:/maven/home/
+      - ./resourcesToMount/pmd:/pmd
+    environment:
+      QUEUE_NAME: stackroute/openjdk8maven
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+      MVN_LOCAL_REPO: /maven/home/
+    depends_on:
+      - rabbitmq
+      - redis
+    links:
+      - rabbitmq
+      - redis
+    entrypoint:
+      - /temp/scripts/wait-for-service.sh
+      - "rabbitmq"
+      - "5672"
+      - "yarn start"
+
+  openjdk8mysql:
+    image: languagepack-openjdk8mysql:1.0.0
+    build: stackroute/openjdk8mysql
+    restart: always
+    volumes:
+      - ./lp_workspaces:/workspaces
+      - ../data:/data
+      - ./scripts:/temp/scripts
+      - ~/.m2/:/maven/home/
+      - ./resourcesToMount/pmd:/pmd
+    environment:
+      QUEUE_NAME: stackroute/openjdk8mysql
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+      MVN_LOCAL_REPO: /maven/home/
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_ROOT_HOST: 127.0.0.1
+      MYSQL_LP_AC: root
+      MYSQL_LP_ACP: ''
+      MYSQL_HOST: localhost
+      MYSQL_USER: student
+      MYSQL_PASSWORD: student
+      MYSQL_DATABASE: student
+    depends_on:
+      - rabbitmq
+      - redis
+    links:
+      - rabbitmq
+      - redis
+    entrypoint:
+      - /temp/scripts/sleepUntil.sh
+      - "15s"
+      - "yarn boot"
+
+  openjdk8springangularmysqlapp:
+    image: languagepack-openjdk8springangularmysqlapp:1.0.0
+    build: stackroute/openjdk8springangularmysqlapp
+    restart: always
+    volumes:
+      - ./lp_workspaces:/workspaces
+      - ../data:/data
+      - ./scripts:/temp/scripts
+      - ~/.m2/:/maven/home/
+      - ./resourcesToMount/pmd:/pmd
+    environment:
+      QUEUE_NAME: stackroute/openjdk8springangularmysqlapp
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+      MVN_LOCAL_REPO: /maven/home/
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_ROOT_HOST: 127.0.0.1
+      MYSQL_LP_AC: root
+      MYSQL_LP_ACP: ''
+      MYSQL_HOST: localhost
+      MYSQL_USER: student
+      MYSQL_PASSWORD: student
+      MYSQL_DATABASE: student
+    depends_on:
+      - rabbitmq
+      - redis
+    links:
+      - rabbitmq
+      - redis
+    entrypoint:
+      - /temp/scripts/sleepUntil.sh
+      - "20s"
+      - "yarn boot"
+
+  openjdk8springmysqlmongoapp:
+    image: languagepack-openjdk8springmysqlmongoapp:1.0.0
+    build: stackroute/openjdk8springmysqlmongoapp
+    restart: always
+    volumes:
+      - ./lp_workspaces:/workspaces
+      - ../data:/data
+      - ./scripts:/temp/scripts
+      - ~/.m2/:/maven/home/
+      - ./resourcesToMount/pmd:/pmd
+    environment:
+      QUEUE_NAME: stackroute/openjdk8springmysqlmongoapp
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+      MVN_LOCAL_REPO: /maven/home/
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_ROOT_HOST: 127.0.0.1
+      MYSQL_LP_AC: root
+      MYSQL_LP_ACP: ''
+      MYSQL_HOST: localhost
+      MYSQL_USER: student
+      MYSQL_PASSWORD: student
+      MYSQL_DATABASE: student
+      MONGO_URL: 'mongodb://127.0.0.1:27017/student'
+      MONGO_HOST: 127.0.0.1
+      MONGO_PORT: 27017
+      MONGO_USER: ""
+      MONGO_PASSWORD: ""
+    depends_on:
+      - rabbitmq
+      - redis
+    links:
+      - rabbitmq
+      - redis
+    entrypoint:
+      - /temp/scripts/sleepUntil.sh
+      - "20s"
+      - "yarn boot"
+
+  # dotnetapp:
+  #   image: languagepack-dotnetapp:1.0.0
+  #   build: stackroute/dotnetapp
+  #   restart: always
+  #   volumes:
+  #     - ./lp_workspaces:/workspaces
+  #     - ../data:/data
+  #     - ./scripts:/temp/scripts
+  #   environment:
+  #     QUEUE_NAME: stackroute/dotnetapp
+  #     REDIS_HOST: redis
+  #     AMQP_URL: 'amqp://rabbitmq'
+  #   depends_on:
+  #     - rabbitmq
+  #     - redis
+  #   links:
+  #     - rabbitmq
+  #     - redis
+  #   entrypoint:
+  #     - /temp/scripts/sleepUntil.sh
+  #     - "10s"
+  #     - "yarn start"
+
+  # dotnetmssqlapp:
+  #   image: languagepack-dotnetmssqlapp:1.0.0
+  #   build: stackroute/dotnetmssqlapp
+  #   restart: always
+  #   volumes:
+  #     - ./lp_workspaces:/workspaces
+  #     - ../data:/data
+  #     - ./scripts:/temp1/scripts
+  #   environment:
+  #     QUEUE_NAME: stackroute/dotnetmssqlapp
+  #     REDIS_HOST: redis
+  #     AMQP_URL: 'amqp://rabbitmq'
+  #     ACCEPT_EULA: "Y"
+  #     MSSQL_USER: sa
+  #     SA_PASSWORD: "student@123"
+  #     MSSQL_DATABASE: student
+  #     MSSQL_HOST: localhost
+  #     MSSQL_PORT: '1433'
+  #     MSSQL_PID: "Express"
+  #     MSSQL_CONNECTION_TIMEOUT: "5"
+  #     MSSQL_URL: "Server=tcp:localhost;database=student;User id=sa;Password=student@123;MultipleActiveResultSets=True;Connect Timeout=5;Integrated Security=false"
+  #   depends_on:
+  #     - rabbitmq
+  #     - redis
+  #   links:
+  #     - rabbitmq
+  #     - redis
+  #   entrypoint:
+  #     - /temp1/scripts/sleepUntil.sh
+  #     - "15s"
+  #     - "yarn boot"
+
+  # dotnetangularmssqlapp:
+  #   image: languagepack-dotnetangularmssqlapp:1.0.0
+  #   build: stackroute/dotnetangularmssqlapp
+  #   restart: always
+  #   volumes:
+  #     - ./lp_workspaces:/workspaces
+  #     - ../data:/data
+  #     - ./scripts:/temp1/scripts
+  #   environment:
+  #     QUEUE_NAME: stackroute/dotnetangularmssqlapp
+  #     REDIS_HOST: redis
+  #     AMQP_URL: 'amqp://rabbitmq'
+  #     ACCEPT_EULA: "Y"
+  #     MSSQL_USER: sa
+  #     SA_PASSWORD: "student@123"
+  #     MSSQL_DATABASE: student
+  #     MSSQL_HOST: localhost
+  #     MSSQL_PORT: '1433'
+  #     MSSQL_PID: "Express"
+  #     MSSQL_CONNECTION_TIMEOUT: "5"
+  #     MSSQL_URL: "Server=tcp:localhost;database=student;User id=sa;Password=student@123;MultipleActiveResultSets=True;Connect Timeout=5;Integrated Security=false"
+  #   depends_on:
+  #     - rabbitmq
+  #     - redis
+  #   links:
+  #     - rabbitmq
+  #     - redis
+  #   entrypoint:
+  #     - /temp1/scripts/sleepUntil.sh
+  #     - "20s"
+  #     - "yarn boot"
+
+  phantomjs:
+    image: languagepack-phantomjs:1.0.0
+    build: stackroute/phantomjs
+    restart: always
+    volumes:
+      - ./lp_workspaces:/workspaces
+      - ../data:/data
+      - ./scripts:/temp/scripts
+    environment:
+      QUEUE_NAME: stackroute/phantomjs
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+    depends_on:
+      - rabbitmq
+      - redis
+    links:
+      - rabbitmq
+      - redis
+    entrypoint:
+      - /temp/scripts/sleepUntil.sh
+      - "30s"
+      - "yarn start"
+
+  unix:
+    image: languagepack-unix:1.0.0
+    build: stackroute/unix
+    restart: always
+    volumes:
+      - ./lp_workspaces:/workspaces
+      - ../data:/data
+      - ./scripts:/temp/scripts
+    environment:
+      QUEUE_NAME: stackroute/unix
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+    depends_on:
+      - rabbitmq
+      - redis
+    links:
+      - rabbitmq
+      - redis
+    entrypoint:
+      - /temp/scripts/wait-for-service.sh
+      - "rabbitmq"
+      - "5672"
+      - "yarn start"
+
+  sonarqube:
+    image: languagepack-sonarqube:1.0.0
+    build: stackroute/sonarqube
+    restart: always
+    volumes:
+      - ./lp_workspaces:/workspaces
+      - ../data:/data
+      - ./scripts:/temp/scripts
+    environment:
+      QUEUE_NAME: stackroute/sonarqube
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+      SONAR_SERVER: http://server0.lab.stackroute.in:9000
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq
+      # - sonarqube-server
+      # entrypoint:
+      #   - /temp/scripts/wait-for-service.sh
+      #   - "0.0.0.0"
+      #   - "5672"
+      #   - "yarn start"
+
+  redis:
+   image: smebberson/alpine-redis
+   restart: always
+   expose:
+    - 6379
+   ports:
+    - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:management
+    restart: always
+    volumes:
+      - /data:/data/db
+    expose:
+      - 5672
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+
+  # sonarqube-server:
+  #   image: sonarqube:alpine
+  #   ports:
+  #     - 9000:9000
+  #     - 9092:9092

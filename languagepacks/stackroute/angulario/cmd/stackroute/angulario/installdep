@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+
+echo Installing Dependencies in $WORKSPACE
+
+cd $WORKSPACE
+
+npm install $NPM_OPTIONS \
+  && if [ "$ADDITIONAL_PACKAGES_TO_INSTALL"_EMPTY = _EMPTY ]; then echo " no additional packages installed..! "; else npm install $ADDITIONAL_PACKAGES_TO_INSTALL ; fi \
+  && echo installation completed..!

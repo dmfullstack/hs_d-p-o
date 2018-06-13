@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -e
+echo REPOSITORY_URL $REPOSITORY_URL
+echo REF $REF
+echo WORKSPACE $WORKSPACE
+mkdir -p $WORKSPACE
+#Configure Private Key for git commands
+export GIT_SSH_COMMAND="ssh -o \"StrictHostKeyChecking no\" -i /ssh/id_rsa"
+git clone $REPOSITORY_URL $WORKSPACE && cd $WORKSPACE && git checkout $REF

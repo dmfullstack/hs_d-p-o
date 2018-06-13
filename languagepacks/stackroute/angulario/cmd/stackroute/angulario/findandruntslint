@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# in this we will run tslint rules
+set -e
+
+echo executing TS Lint in $WORKSPACE
+
+# echo ignoring patterns $IGNORE_PATTERN
+
+cd $WORKSPACE
+
+echo running with NPM_OPTIONS as $NPM_OPTIONS
+
+echo "-----------------------------------"
+
+# NPM_SCRIPT_OPTIONS gives the tslint result in json structure '--format json'
+echo passing NPM_SCRIPT_OPTIONS as $NPM_SCRIPT_OPTIONS for command $NPM_SCRIPT_CMD
+
+# Finding the target directory to run tslint
+TARGET_FOLDER_TO_BUILD=$(find -maxdepth $MAX_DEPTH -type d $EXCLUDE_FOLDERS_TO_RUN)
+
+echo Directory to run the tslint $TARGET_FOLDER_TO_BUILD
+
+cd $TARGET_FOLDER_TO_BUILD
+
+npm run $NPM_SCRIPT_CMD $NPM_OPTIONS -- $NPM_SCRIPT_OPTIONS

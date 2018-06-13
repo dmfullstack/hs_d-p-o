@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+echo building project in $WORKSPACE
+
+cd $WORKSPACE
+
+#yarn
+yarn $YARN_OPTIONS \
+  && if [ "$ADDITIONAL_PACKAGES_TO_INSTALL"_EMPTY = _EMPTY ]; then echo " no additional packages installed..! "; else yarn add $ADDITIONAL_PACKAGES_TO_INSTALL ; fi \
+  && echo installation completed..!

@@ -1,0 +1,86 @@
+#!/bin/sh
+
+set -e
+
+# This is to ensure all I/O commands are synchronized before next command
+sync
+
+echo checking repository structure in $WORKSPACE
+
+cd $WORKSPACE
+
+TARGET_DIRECTORY_TO_ASSERT=$(find $TARGET_ROOT_DIRECTORY -maxdepth $MAX_DEPTH -type $FILE_TYPE $EXCLUDE_FOLDERS_TO_ASSERT)
+
+cd $TARGET_DIRECTORY_TO_ASSERT
+
+echo checking if the following folders exist or not $ASSERT_FOLDERS_EXISTS
+
+# check for the folders exist or not in the directories( && submodules) . if folder is not there close with exit status 1
+if [ "$ASSERT_FOLDERS_EXISTS"_EMPTY = _EMPTY ]
+  then 
+    echo no manadatory folders 
+  else 
+    for i in $ASSERT_FOLDERS_EXISTS
+    do if [ -d $i ]
+      then  
+        echo ''
+      else 
+        echo ERROR':' expected $i directory in project structure, please verify the folder structure and try again >&2
+        exit 1 
+    fi 
+  done 
+fi
+
+echo checking if the following files exist or not $ASSERT_FILES_EXISTS
+
+# check for the files exist or not in directoriies even inside folder also it will check if not exits status with 1
+if [ "$ASSERT_FILES_EXISTS"_EMPTY = _EMPTY ]
+  then 
+    echo no mandatory files 
+  else 
+    for i in $ASSERT_FILES_EXISTS
+    # do test -e $i && echo '' || \
+    do if [ -e $i ]
+      then 
+        echo ''
+      else  
+        echo ERROR ':' expected $i file to present in project, please verify and try again >&2
+        exit 1
+    fi 
+  done
+fi
+
+echo Following files should not exist $ASSERT_FOLDERS_DOES_NOT_EXISTS
+
+# checks for the folders are submodules present in directories if there exits status with 1
+if [ "$ASSERT_FOLDERS_DOES_NOT_EXISTS"_EMPTY = _EMPTY ]
+  then 
+    echo no $ASSERT_FOLDERS_DOES_NOT_EXISTS
+  else 
+    for i in $ASSERT_FOLDERS_DOES_NOT_EXISTS
+    do if [ -d $i ]
+      then 
+        echo ERROR ':' unexpected $i folder in project structure, please verify and try again >&2
+        exit 1
+      else 
+        echo "" 
+    fi 
+  done 
+fi
+
+echo Following files should not exist $ASSERT_FILES_DOES_NOT_EXISTS
+
+# checks for the files are submodules files present in directories if there exits status with 1
+if [ "$ASSERT_FILES_DOES_NOT_EXISTS"_EMPTY = _EMPTY ]
+  then 
+    echo no files to check
+  else 
+    for i in $ASSERT_FILES_DOES_NOT_EXISTS
+    do if [ -e $i ]
+      then 
+        echo ERROR ':' unexpected $i files in project, please verify and try again >&2
+        exit 1
+      else echo ""
+    fi 
+  done 
+fi

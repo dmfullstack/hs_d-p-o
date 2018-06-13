@@ -1,0 +1,16 @@
+version: '2'
+services:
+  orchestrator:
+    image: dp-orchestrator:0.1.0
+    build: .
+    network_mode: host
+    ports:
+      - 8081:8081
+    restart: always
+    env_file: "docker-${NODE_ENV}.env"
+    # environment:
+    #   REDIS_HOST: hobbes-dp-lp-redis.px9mbe.0001.aps1.cache.amazonaws.com
+    #   REDIS_PORT: 6379
+    #   AMQP_URL: amqp://admin:admin@10.0.0.223:5672
+    #   MONGO_URL: mongodb://10.0.0.103:27017/hobbesDP
+    #   PORT: 8081

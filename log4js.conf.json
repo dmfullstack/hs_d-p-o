@@ -1,0 +1,21 @@
+{
+  "appenders": [{
+    "type": "console",
+    "level": "ALL",
+    "layout": {
+      "type": "pattern",
+      "pattern": "[%d{DATE}] %[[%p]%] - %m"
+    }
+  }, {
+    "type": "dateFile",
+    "level": "ALL",
+    "filename": "app.log",
+    "pattern": "-yyyy-MM-dd",
+    "layout": {
+      "type": "pattern",
+      "pattern": "[%d{DATE}] [%p] - %m"
+    },
+    "maxLogSize": 1024,
+    "backups": 3
+  }]
+}

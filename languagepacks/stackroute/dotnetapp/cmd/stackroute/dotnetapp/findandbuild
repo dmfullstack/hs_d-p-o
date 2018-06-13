@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -e
+
+echo building application in $WORKSPACE ' '
+
+cd $WORKSPACE
+
+# Finding the direcory to run the dotnet build command
+TARGET_FOLDER_TO_RUN=$(find -maxdepth $MAX_DEPTH -type $FILE_TYPE $EXCLUDE_FOLDERS_TO_BUILD)
+
+cd $TARGET_FOLDER_TO_RUN
+
+echo executing command $CMD in folder $TARGET_FOLDER_TO_RUN ' '
+
+$CMD

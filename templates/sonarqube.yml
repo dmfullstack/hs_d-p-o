@@ -1,0 +1,15 @@
+version: '2'
+stages:
+  git-clone:
+    type: stackroute/git/clone-ref
+    input:
+      REPOSITORY_URL: "{{payload.repoUrl}}"
+      REF: "{{payload.ref}}"
+      WORKSPACE: "{{context.WORKSPACE}}"
+  sonar-scanner:
+    type: stackroute/sonarqube/sonar-scanner
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}"
+      COMMIT_ID: "{{payload.ref}}"
+    depends_on:
+      - git-clone

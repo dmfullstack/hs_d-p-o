@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# in this we will run protractor test cases
+set -e
+
+echo executing Angular e2e tests using protractor in $WORKSPACE
+
+cd $WORKSPACE
+
+# Protractor test cases goes to this folder, hence clean it up before running the tests
+rm -rf $REPORT_OUTPUT_DIR
+
+echo running with NPM_OPTIONS as $NPM_OPTIONS
+echo "-----------------------------------"
+echo overriding protractor config file $OVERRIDE_PROTRACTOR_CONFIG_FILE with $EXTENDED_PROTRACTOR_CONFIG_FILE
+echo passing NPM_SCRIPT_OPTIONS as $NPM_SCRIPT_OPTIONS
+
+# Pass the config explicilty so that that config is used instead of the default
+npm run e2e $NPM_OPTIONS -- --config $EXTENDED_PROTRACTOR_CONFIG_FILE $NPM_SCRIPT_OPTIONS

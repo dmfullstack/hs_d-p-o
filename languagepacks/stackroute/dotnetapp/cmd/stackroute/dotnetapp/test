@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+
+echo running tests of the project in $TEST_FOLDER
+
+cd $TEST_FOLDER
+
+dotnet test --logger $OUTPUT_FILE

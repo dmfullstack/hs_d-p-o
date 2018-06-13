@@ -1,0 +1,166 @@
+version: '1'
+stages:
+  git-clone-baserepo:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "ssh://git@gitlab-wd.stackroute.in:2222/hobbes-boilerplates/baserepo-NodeJSConsoleApp.git"
+      REPOSITORY_REF: master
+      REPOSITORY_REF_TYPE: "branch"
+      WORKSPACE: "{{context.WORKSPACE}}/baseRepo"
+  git-clone-submission:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "{{payload.submissionRepoUrl}}"
+      REPOSITORY_REF: "{{payload.submissionRepoRef}}"
+      REPOSITORY_REF_TYPE: "{{payload.submissionRepoReftype}}"
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+  git-clone-solution:
+    type: stackroute/git/clone
+    input:
+      REPOSITORY_URL: "{{payload.solutionRepoUrl}}"
+      REPOSITORY_REF: "{{payload.solutionRepoRef}}"
+      REPOSITORY_REF_TYPE: "{{payload.solutionRepoReftype}}"
+      WORKSPACE: "{{context.WORKSPACE}}/solution"
+  copy-baserepo-eslint:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "baseRepo/.eslintrc.js"
+      DESTINATION: "submission"
+    depends_on:
+      - git-clone-baserepo
+      - git-clone-submission
+  safecopy-eslint-to-submission:
+    type: stackroute/unix/safecopy
+    input:
+      SOURCE: "solution/.eslintrc.js"
+      DESTINATION: "submission"
+    depends_on:
+      - git-clone-solution
+      - git-clone-submission
+      - copy-baserepo-eslint
+  copy-commandertests-to-submission:
+    type: stackroute/unix/copy
+    input:
+      SOURCE: "solution/test"
+      DESTINATION: "submission/commander"
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+  delete-data-directory:
+    type: stackroute/unix/delete
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      FILES: data
+    depends_on:
+      - git-clone-submission
+  delete-output-directory:
+    type: stackroute/unix/delete
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      FILES: output
+    depends_on:
+      - git-clone-submission
+  create-output-directory:
+    type: stackroute/unix/mkdir
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      FILES: output
+    depends_on:
+      - delete-output-directory
+  link-data-directory:
+    type: stackroute/unix/link
+    input:
+      SOURCE: /data
+      DESTINATION: "{{context.WORKSPACE}}/submission"
+    depends_on:
+      - delete-data-directory
+  build-project:
+    type: stackroute/javascript/build
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      # TIMEOUT_DURATION_MS: "300000"
+      YARN_OPTIONS: --silent --no-progress
+    output:
+      payload:
+        output:
+          build:
+            status: \{\{EXITCODE\}\}
+            output: \{\{OUTPUT\}\}
+            errors: \{\{ERRORS\}\}
+            summary: \{\{SUMMARY\}\}
+    depends_on:
+      - git-clone-submission
+      - git-clone-solution
+      - delete-data-directory
+      - create-output-directory
+      - delete-data-directory
+      - copy-commandertests-to-submission
+  run-project:
+    type: stackroute/javascript/start
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+    output:
+      payload:
+        output:
+          run:
+            status: \{\{EXITCODE\}\}
+            output: \{\{OUTPUT\}\}
+            errors: \{\{ERRORS\}\}
+            summary: \{\{SUMMARY\}\}
+    depends_on:
+      - build-project
+      - link-data-directory
+  run-commander-tests:
+    type: stackroute/javascript/mocha
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      # TESTPATHS: "commander/**/*.js"
+      TESTPATHS: "commander"
+    output:
+      payload:
+        output:
+          tests:
+            commanderTests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - run-project
+  run-cadet-tests:
+    type: stackroute/javascript/mocha
+    input:
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      # TESTPATHS: "test/**/*.js"
+      TESTPATHS: "test"
+    output:
+      payload:
+        output:
+          tests:
+            cadetTests:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - run-project
+  run-eslintrc:
+    type: stackroute/javascript/eslint
+    input:
+      RULES_FILE: ".eslintrc.js"
+      WORKSPACE: "{{context.WORKSPACE}}/submission"
+      YARN_OPTIONS: --silent --no-progress
+      ESLINT_OPTIONS: --quiet
+      IGNORE_PATTERN: --ignore-pattern html/**/*.js --ignore-pattern data/**/*.js --ignore-pattern commander-UI-Test/**/*.js --ignore-pattern commander/**/*.js
+    output:
+      payload:
+        output:
+          lint:
+            eslint:
+              status: \{\{EXITCODE\}\}
+              output: \{\{OUTPUT\}\}
+              errors: \{\{ERRORS\}\}
+              summary: \{\{SUMMARY\}\}
+    depends_on:
+      - safecopy-eslint-to-submission
+      - build-project

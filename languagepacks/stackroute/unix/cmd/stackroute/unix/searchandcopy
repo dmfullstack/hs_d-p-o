@@ -1,0 +1,27 @@
+#!/bin/sh
+
+set -e
+
+# This is to ensure all I/O commands are synchronized before next command
+sync
+
+# cd $WORKSPACE
+
+# echo moving $FILES from $WORKSPACE to $DESTINATION
+echo copying $DIRECTORY_NAME_TO_COPY from $SOURCE_ROOT_DIRECTORY to $TARGET_ROOT_DIRECTORY and the file to copy is $FILE_TO_COPY exluded files $EXCLUDE_FOLDERS_TO_COPY
+
+# mv $(find ./solution -name "commander") $(find ./submission -name "datamunger")
+
+# cp -r  $(find $SRC_DIR -name $SOURCE) $(find $DES_DIR -name $DESTINATION)
+
+cd $WORKSPACE
+
+# Finding the directory to copy from source to destination
+TARGET=$(find $TARGET_ROOT_DIRECTORY -maxdepth $MAX_DEPTH -type $FILE_TYPE $EXCLUDE_FOLDERS_TO_COPY)
+
+echo Copying $SOURCE_ROOT_DIRECTORY to $TARGET
+
+cp $SOURCE_ROOT_DIRECTORY $TARGET
+
+# This is to ensure all I/O commands are synchronized before next command
+sync

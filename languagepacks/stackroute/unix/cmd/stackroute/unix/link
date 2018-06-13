@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -e
+
+# This is to ensure all I/O commands are synchronized before next command
+sync
+
+cd $WORKSPACE
+echo creating link in $WORKSPACE
+echo source $SOURCE
+echo destination $DESTINATION
+# create the symbolic link forcefully, even if the destination exists
+ln -snf $SOURCE $DESTINATION
+
+# This is to ensure all I/O commands are synchronized before next command
+sync

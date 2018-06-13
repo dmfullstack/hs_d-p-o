@@ -1,0 +1,93 @@
+#!/bin/sh
+
+set -e
+
+cd $WORKSPACE
+
+# echo "loglevel=silent" >> $WORKSPACE/.npmrc
+echo [*] Setting MySQL environment variables for the app [$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST/$MYSQL_DATABASE]
+echo [*] Running web server using $WORKSPACE, in background
+
+killtree() {
+	local _pid=$1
+	local _sig=${2:--TERM}
+	kill -stop ${_pid} # needed to stop quickly forking parent from producing children between child killing and parent killing
+
+	echo trying to stop process $_pid
+
+	for _child in $(ps -o pid --no-headers --ppid ${_pid}); do
+		echo Process $_pid has a child process ${_child}, will be stopped too.
+        killtree ${_child} ${_sig}
+    done
+    kill -${_sig} ${_pid}
+    echo Killed process $_pid
+}
+
+PROC=/var/log/.pid
+
+echo [*] Checking for any dormant old process
+if [ -f "$PROC" ]
+	then
+		oldPid=`cat "$PROC"`;
+		echo [*] Found dormant old process $oldPid
+		if ps -p $oldPid > /dev/null
+			then
+				echo [*] Found active old process $oldPid, trying to kill same
+				killtree $oldPid 9
+				echo Killed dormant old process $oldPid
+				rm $PROC
+			else
+				echo [*] Process $oldPid, is not active
+		fi
+	else
+		echo [*] no dormant old process found
+fi
+
+# npm run spring-boot:run &
+# yarn spring-boot:run -- -Dmaevn.repo.local=$MVN_LOCAL_REPO -DMYSQL_HOST=${MYSQL_HOST} -DMYSQL_USER=${MYSQL_USER} -DMYSQL_PASSWORD=${MYSQL_PASSWORD} -DMYSQL_DATABASE=${MYSQL_DATABASE} &
+npm run spring-boot:run -- -Dmaven.repo.local=$MVN_LOCAL_REPO -DMYSQL_HOST=${MYSQL_HOST} -DMYSQL_USER=${MYSQL_USER} -DMYSQL_PASSWORD=${MYSQL_PASSWORD} -DMYSQL_DATABASE=${MYSQL_DATABASE} &
+pid=$!
+echo $pid > $PROC
+echo "Saving backend service process to " $(find /var/log/ -name ".pid")
+
+echo [*] ------------------------------------------
+echo [*] Web server now running with process $pid
+echo [*] ------------------------------------------
+
+WEB_SERVER_URL='http://localhost:8080'
+
+echo [*] Checking if web server is up
+until [ `curl -A "Web server check" -sL --connect-timeout 3 -w "%{http_code}\n" $WEB_SERVER_URL -o /dev/null` -ge "200" ]; do
+	# if web server is not running does not make sense waiting, hence gracefully exit
+	if ps -p $pid > /dev/null
+		then
+			echo 'Waiting for '$WEB_SERVER_URL' to respond'
+			sleep 3
+		else
+			echo "Web server is not responding or has exited, aborting further execution..!" >&2
+			killtree $pid 9
+			rm $PROC
+			exit 1
+	fi
+done
+echo [*] Web server now responding, proceeding to run e2e tests
+
+cd $WORKSPACE
+
+npm $NPM_OPTIONS run e2e -- --config $EXTENDED_PROTRACTOR_CONFIG_FILE $NPM_SCRIPT_OPTIONS 2> /var/log/nge2espring.error.log || :
+cat /var/log/nge2espring.error.log >&2
+rm /var/log/nge2espring.error.log
+# yarn e2e $NPM_SCRIPT_OPTIONS
+
+echo [*] -----------------------------------
+echo [*] Killing child services of the web server process $pid
+# kill -9 $pid
+# kill -9 -${pid}
+
+killtree $pid 9
+rm $PROC
+echo "Removing backend service pid file " $(find /var/log/ -name ".pid")
+
+echo [*] -----------------------------------
+echo [*] Web service killed
+echo [*] -----------------------------------

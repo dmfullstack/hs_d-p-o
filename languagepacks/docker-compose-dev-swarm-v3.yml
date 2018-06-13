@@ -1,0 +1,312 @@
+version: '3'
+
+volumes:
+  workspaces:
+  gitlab_ssh:
+  input_data:
+  docker_scripts:
+
+services:
+
+  openjdk8springangularmysqlapp:
+    image: ${DOCKER_REGISTRY_URL}/languagepack-openjdk8springangularmysqlapp:1.0.0
+    build: stackroute/openjdk8springangularmysqlapp
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+      restart_policy:
+        condition: any
+    volumes:
+      - "./lp_workspaces:/workspaces"
+      - "../data:/data"
+      - "./scripts:/temp/scripts"
+      - "~/.m2/:/maven/home/"
+      - "./resourcesToMount/pmd:/pmd"
+    environment:
+      QUEUE_NAME: stackroute/openjdk8springangularmysqlapp
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+      MVN_LOCAL_REPO: /maven/home/
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_ROOT_HOST: 127.0.0.1
+      MYSQL_LP_AC: root
+      MYSQL_LP_ACP: ''
+      MYSQL_HOST: localhost
+      MYSQL_USER: student
+      MYSQL_PASSWORD: student
+      MYSQL_DATABASE: student
+    entrypoint:
+      - /temp/scripts/sleepUntil.sh
+      - "20s"
+      - "yarn boot"
+
+  openjdk8mysql:
+    image: ${DOCKER_REGISTRY_URL}/languagepack-openjdk8mysql:1.0.0
+    build: stackroute/openjdk8mysql
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+      restart_policy:
+        condition: any
+    volumes:
+      - "./lp_workspaces:/workspaces"
+      - "../data:/data"
+      - "./scripts:/temp/scripts"
+      - "~/.m2/:/maven/home/"
+      - "./resourcesToMount/pmd:/pmd"
+    environment:
+      QUEUE_NAME: stackroute/openjdk8mysql
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+      MVN_LOCAL_REPO: /maven/home/
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_ROOT_HOST: 127.0.0.1
+      MYSQL_LP_AC: root
+      MYSQL_LP_ACP: ''
+      MYSQL_HOST: localhost
+      MYSQL_USER: student
+      MYSQL_PASSWORD: student
+      MYSQL_DATABASE: student
+    entrypoint:
+      - /temp/scripts/sleepUntil.sh
+      - "15s"
+      - "yarn boot"
+
+  openjdk8maven:
+    image: ${DOCKER_REGISTRY_URL}/languagepack-openjdk8maven:1.0.0
+    build: stackroute/openjdk8maven
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+      restart_policy:
+        condition: any
+    volumes:
+      - "./lp_workspaces:/workspaces"
+      - "../data:/data"
+      - "./scripts:/temp/scripts"
+      - "~/.m2/:/maven/home/"
+      - "./resourcesToMount/pmd:/pmd"
+    environment:
+      QUEUE_NAME: stackroute/openjdk8maven
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+      MVN_LOCAL_REPO: /maven/home/
+    entrypoint:
+      - /temp/scripts/wait-for-service.sh
+      - "rabbitmq"
+      - "5672"
+      - "yarn start"
+
+  angulario:
+    image: ${DOCKER_REGISTRY_URL}/languagepack-angulario:1.0.0
+    build: stackroute/angulario
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+      restart_policy:
+        condition: any
+    volumes:
+      - "./lp_workspaces:/workspaces"
+      - "../data:/data"
+      - "./scripts:/temp/scripts"
+    environment:
+      QUEUE_NAME: stackroute/angulario
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+    entrypoint:
+      - /temp/scripts/wait-for-service.sh
+      - "rabbitmq"
+      - "5672"
+      - "yarn start"
+
+  nodejsmongo:
+    image: ${DOCKER_REGISTRY_URL}/languagepack-nodejsmongo:1.0.0
+    build: stackroute/nodejsmongo
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+      restart_policy:
+        condition: any
+    volumes:
+      - "./lp_workspaces:/workspaces"
+      - "../data:/data"
+      - "./scripts:/temp/scripts"
+    environment:
+      QUEUE_NAME: stackroute/nodejsmongo
+      MONGO_URL: 'mongodb://127.0.0.1:27017/student'
+      MONGO_HOST: 127.0.0.1
+      MONGO_PORT: 27017
+      MONGO_USER: ""
+      MONGO_PASSWORD: ""
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+    entrypoint:
+      - /temp/scripts/wait-for-service.sh
+      - "rabbitmq"
+      - "5672"
+      - "yarn boot"
+
+  nodejscassandra:
+    image: ${DOCKER_REGISTRY_URL}/languagepack-nodejscassandra:1.0.0
+    build: stackroute/nodejscassandra
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+      restart_policy:
+        condition: any
+    volumes:
+      - "./lp_workspaces:/workspaces"
+      - "../data:/data"
+      - "./scripts:/temp/scripts"
+    environment:
+      QUEUE_NAME: stackroute/nodejscassandra
+      CASSANDRA_KEYSPACE: cassandradb
+      CASSANDRA_URL: 'cassandra://127.0.0.1:9042/'
+      CASSANDRA_HOST: '127.0.0.1'
+      CASSANDRA_PORT: '9042'
+      CASSANDRA_USER: ''
+      CASSANDRA_PASSWORD: ''
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+      CASSANDRA_DEFAULT_KEYSPACE: cassandradb
+    entrypoint:
+      - /temp/scripts/wait-for-service.sh
+      - "rabbitmq"
+      - "5672"
+      - "yarn boot"
+
+  javascript:
+    image: ${DOCKER_REGISTRY_URL}/languagepack-javascript:1.0.0
+    build: stackroute/javascript
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+      restart_policy:
+        condition: any
+    restart: always
+    volumes:
+      - "./lp_workspaces:/workspaces"
+      - "../data:/data"
+      - "./scripts:/temp/scripts"
+    environment:
+      QUEUE_NAME: stackroute/javascript
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+    entrypoint:
+      - /temp/scripts/wait-for-service.sh
+      - "rabbitmq"
+      - "5672"
+      - "yarn start"
+
+  phantomjs:
+    image: ${DOCKER_REGISTRY_URL}/languagepack-phantomjs:1.0.0
+    build: stackroute/phantomjs
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+      restart_policy:
+        condition: any
+    volumes:
+      - "./lp_workspaces:/workspaces"
+      - "../data:/data"
+      - "./scripts:/temp/scripts"
+    environment:
+      QUEUE_NAME: stackroute/phantomjs
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+    entrypoint:
+      - /temp/scripts/sleepUntil.sh
+      - "30s"
+      - "yarn start"
+
+  git:
+    image: ${DOCKER_REGISTRY_URL}/languagepack-git:1.0.0
+    build: stackroute/git
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+      restart_policy:
+        condition: any
+    volumes:
+      - "./lp_workspaces:/workspaces"
+      - "../data:/data"
+      - "./stackroute/git/ssh:/ssh"
+      - "./scripts:/temp/scripts"
+    environment:
+      QUEUE_NAME: stackroute/git
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+    entrypoint:
+      - /temp/scripts/wait-for-service.sh
+      - "rabbitmq"
+      - "5672"
+      - "yarn start"
+
+  unix:
+    image: ${DOCKER_REGISTRY_URL}/languagepack-unix:1.0.0
+    build: stackroute/unix
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+      restart_policy:
+        condition: any
+    volumes:
+      - "./lp_workspaces:/workspaces"
+      - "../data:/data"
+      - "./scripts:/temp/scripts"
+    environment:
+      QUEUE_NAME: stackroute/unix
+      REDIS_HOST: redis
+      AMQP_URL: 'amqp://rabbitmq'
+    entrypoint:
+      - /temp/scripts/wait-for-service.sh
+      - "rabbitmq"
+      - "5672"
+      - "yarn start"
+
+  redis:
+    image: smebberson/alpine-redis
+    container_name: redis
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+      restart_policy:
+        condition: any
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+      restart_policy:
+        condition: any
+    ports:
+      - "5672:5672"
+      - "15672:15672"

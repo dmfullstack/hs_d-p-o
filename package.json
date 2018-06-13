@@ -1,0 +1,33 @@
+{
+  "name": "rishikesh",
+  "version": "0.1.0",
+  "description": "Distributed Pipeline Execution Service",
+  "main": "index.js",
+  "author": "Sagar Patke <sagarpatke@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js",
+    "test": "mocha workers/**/*.spec.js"
+  },
+  "dependencies": {
+    "amqplib": "^0.5.1",
+    "async": "^2.1.4",
+    "body-parser": "^1.16.0",
+    "express": "^4.15.3",
+    "htmlhint": "^0.9.13",
+    "lodash": "^4.17.4",
+    "log4js": "^1.1.1",
+    "mock-require": "^2.0.1",
+    "mongoose": "^4.9.8",
+    "morgan": "^1.8.2",
+    "nid": "^0.3.2",
+    "nunjucks": "^3.0.0",
+    "redis": "^2.6.5",
+    "superagent": "^3.5.2",
+    "yamljs": "^0.2.8"
+  },
+  "devDependencies": {
+    "mocha": "^3.2.0",
+    "should": "^11.1.2"
+  }
+}

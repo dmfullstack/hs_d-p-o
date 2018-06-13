@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+
+# This is to ensure all I/O commands are synchronized before next command
+sync
+
+echo "Copying without throwing any error, even if the source does not exist..!"
+echo SOURCE $SOURCE
+echo DESTINATION $DESTINATION
+echo this is the WORKSPACE $WORKSPACE
+cd $WORKSPACE
+#cp -r $SOURCE $DESTINATION 2>>/dev/null
+cp -r $SOURCE $DESTINATION 2>/dev/null || :
+
+# This is to ensure all I/O commands are synchronized before next command
+sync

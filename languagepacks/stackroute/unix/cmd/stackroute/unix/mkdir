@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+# This is to ensure all I/O commands are synchronized before next command
+sync
+
+cd $WORKSPACE
+echo creating the $FILES directory in $WORKSPACE
+mkdir $FILES
+
+# This is to ensure all I/O commands are synchronized before next command
+sync

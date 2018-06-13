@@ -1,0 +1,78 @@
+#!/bin/sh
+
+set -e
+
+# This is to ensure all I/O commands are synchronized before next command
+sync
+
+echo checking project structure in $WORKSPACE
+
+cd $WORKSPACE
+
+ERROR_MSG=""
+
+if [ "$ASSERT_FOLDERS_EXISTS"_EMPTY = _EMPTY ];
+  then
+    echo ''
+  else
+    for i in $ASSERT_FOLDERS_EXISTS;
+    do if [ -d $i ];
+  	  then
+        echo ''
+  	  else
+        ERROR_MSG="$ERROR_MSG | expected $i directory in project structure, but not found..!"
+    fi
+  done
+fi
+
+if [ "$ASSERT_FILES_EXISTS"_EMPTY = _EMPTY ];
+  then
+    echo ''
+  else
+    for i in $ASSERT_FILES_EXISTS;
+  	# do test -e $i && echo '' || \
+    do if [ -e $i ];
+      then
+        echo ''
+  	  else
+        ERROR_MSG="$ERROR_MSG | expected $i file to present in project folder, but not found..!"
+    fi
+  done
+fi
+
+if [ "$ASSERT_FOLDERS_DOES_NOT_EXISTS"_EMPTY = _EMPTY ];
+  then
+    echo ''
+  else
+    for i in $ASSERT_FOLDERS_DOES_NOT_EXISTS;
+  	do if [ -d $i ];
+  	  then
+        ERROR_MSG="$ERROR_MSG | folder $i should not be in project structure, consider removing...!"
+      else
+        echo ""
+    fi
+  done
+fi
+
+if [ "$ASSERT_FILES_DOES_NOT_EXISTS"_EMPTY = _EMPTY ];
+	then
+    echo ''
+  else
+    for i in $ASSERT_FILES_DOES_NOT_EXISTS;
+  	do if [ -e $i ] ;
+      then
+        ERROR_MSG="$ERROR_MSG :file(s) $i should not be in project folder, consider removing..!"
+  	  else
+        echo ""
+    fi
+  done
+fi
+
+
+if [ -z "$ERROR_MSG" ];
+  then
+    echo "Project structure & files found valid"
+  else
+    echo "One or more error in project structure, ERROR::$ERROR_MSG, please correct errors and try again" >&2
+    exit 1
+fi

@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -e
+
+cd $WORKSPACE
+
+echo executing mocha-phantomjs in $WORKSPACE on $WORKSPACE/$TESTPATHS with options $MOCHA_PHANTOMJS_OPTIONS
+
+# /usr/local/bin/mocha-phantomjs -R json --ssl-protocol=tlsv1 --ignore-ssl-errors=true $WORKSPACE/$TESTPATHS
+# /usr/local/bin/mocha-phantomjs -R json --ssl-protocol=any --ignore-resource-errors --ignore-ssl-errors=true $WORKSPACE/$TESTPATHS
+/usr/local/bin/mocha-phantomjs -R json $MOCHA_PHANTOMJS_OPTIONS $WORKSPACE/$TESTPATHS
+
+# /usr/bin/mocha-phantomjs -R json --ssl-protocol=tlsv1 --ignore-ssl-errors=true $WORKSPACE/UI-Commander/index.html
+
+echo 'Running mocha-phantomjs DONE'

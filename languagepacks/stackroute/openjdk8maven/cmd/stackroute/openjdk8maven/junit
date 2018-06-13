@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+
+echo JUnit testing project in $WORKSPACE with maven home as $MVN_LOCAL_REPO
+
+cd $WORKSPACE
+
+mvn -Dmaven.repo.local=$MVN_LOCAL_REPO test

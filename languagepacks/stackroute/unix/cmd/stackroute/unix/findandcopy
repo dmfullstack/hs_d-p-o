@@ -1,0 +1,22 @@
+#!/bin/sh
+
+set -e
+
+# This is to ensure all I/O commands are synchronized before next command
+sync
+
+# cd $WORKSPACE
+
+# echo moving $FILES from $WORKSPACE to $DESTINATION
+echo copying $DIRECTORY_NAME_TO_COPY from $SOURCE_ROOT_DIRECTORY to $TARGET_ROOT_DIRECTORY
+
+# mv $(find ./solution -name "commander") $(find ./submission -name "datamunger")
+
+# cp -r  $(find $SRC_DIR -name $SOURCE) $(find $DES_DIR -name $DESTINATION)
+
+cd $SOURCE_ROOT_DIRECTORY
+
+cp -r --parents $(find . -name $DIRECTORY_NAME_TO_COPY) $TARGET_ROOT_DIRECTORY
+
+# This is to ensure all I/O commands are synchronized before next command
+sync
